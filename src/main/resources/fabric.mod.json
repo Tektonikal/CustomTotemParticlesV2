@@ -1,0 +1,43 @@
+{
+  "schemaVersion": 1,
+  "id": "customparticles",
+  "version": "${version}",
+  "name": "Custom Totem Particles",
+  "description": "Make your totem particles flashier!",
+  "authors": [
+    "Tektonikal"
+  ],
+  "license": "LGPL-3.0",
+  "icon": "icon.png",
+  "environment": "client",
+  "entrypoints": {
+    "modmenu": [
+      "tektonikal.customtotemparticles.config.ModMenuIntegration"
+    ],
+    "main": [
+      "tektonikal.customtotemparticles.CustomTotemParticles"
+    ]
+  },
+  "mixins": [
+    "customtotemparticles.mixins.json"
+  ],
+  "depends": {
+    "fabricloader": ">=${loader_version}",
+    "fabric": "*",
+    "minecraft": "${minecraft_version}"
+  },
+  "contact": {
+    "homepage": "https://modrinth.com/mod/custom-totems",
+    "issues": "discordapp.com/users/600422323308331176"
+  },
+  "breaks": {
+    "sakuraparticles":"*"
+  },
+  "custom": {
+    "modmenu": {
+    }
+  },
+  "dependencies": {
+    "yet_another_config_lib_v3": "*"
+  }
+}
