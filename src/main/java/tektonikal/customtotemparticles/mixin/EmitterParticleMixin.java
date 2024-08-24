@@ -10,104 +10,76 @@ import net.minecraft.particle.ParticleEffect;
 import net.minecraft.particle.ParticleTypes;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.Mutable;
 import org.spongepowered.asm.mixin.Shadow;
+import org.spongepowered.asm.mixin.injection.At;
+import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.Redirect;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import tektonikal.customtotemparticles.config.YACLConfig;
 
 
 @Mixin(EmitterParticle.class)
 @Environment(EnvType.CLIENT)
 public abstract class EmitterParticleMixin extends NoRenderParticle {
+    @Final
     @Shadow
     private Entity entity;
+    @Final
     @Shadow
     private ParticleEffect parameters;
     @Shadow
     private int emitterAge;
     @Shadow
     @Final
+    @Mutable
     private int maxEmitterAge;
-    private int MaxEmitterAge;
 
     protected EmitterParticleMixin(ClientWorld clientWorld, double d, double e, double f) {
         super(clientWorld, d, e, f);
     }
 
-    @Override
-    public void tick() {
-        if (YACLConfig.INSTANCE.getConfig().modEnabled) {
-            if (parameters == ParticleTypes.TOTEM_OF_UNDYING) {
-                this.MaxEmitterAge = YACLConfig.INSTANCE.getConfig().EmitterAge;
-                for (int i = 0; i < 16.0f * YACLConfig.INSTANCE.getConfig().Multiplier; ++i) {
-                    double d = this.random.nextFloat() * 2.0F - 1.0F;
-                    double e = this.random.nextFloat() * 2.0F - 1.0F;
-                    double f = this.random.nextFloat() * 2.0F - 1.0F;
-                    if (d * d + e * e + f * f > 1)
-                        continue;
-                    double g = this.entity.offsetX(d / 4.0);
-                    double h = this.entity.getBodyY((0.5 + e / 4.0));
-                    double j = this.entity.offsetZ(f / 4.0);
-                    if (!YACLConfig.INSTANCE.getConfig().EmitterMovesWithPlayer && YACLConfig.INSTANCE.getConfig().useEmitter) {
-                        g = this.x;
-                        h = this.y;
-                        j = this.z;
-                    }
-                    if (YACLConfig.INSTANCE.getConfig().useEmitter) {
-                        h += YACLConfig.INSTANCE.getConfig().EmitterYOffset;
-                    }
-                    switch (YACLConfig.INSTANCE.getConfig().INSTANCE.getConfig().Particles) {
-                        case CRIT -> this.world.addParticle(ParticleTypes.CRIT, true, g, h, j, d, e + 0.2, f);
-                        case ENCHANTED_HIT ->
-                                this.world.addParticle(ParticleTypes.ENCHANTED_HIT, false, g, h, j, d, e + 0.2, f);
-                        case EFFECT -> this.world.addParticle(ParticleTypes.EFFECT, false, g, h, j, d, e + 0.2, f);
-                        default ->
-                                this.world.addParticle(ParticleTypes.TOTEM_OF_UNDYING, false, g, h, j, d, e + 0.2, f);
-                    }
-                }
-                ++this.emitterAge;
-                if (YACLConfig.INSTANCE.getConfig().useEmitter) {
-                    if (this.emitterAge >= this.MaxEmitterAge) {
-                        this.markDead();
-                    }
-                } else {
-                    if (this.emitterAge >= this.maxEmitterAge) {
-                        this.markDead();
-                    }
-                }
-            } else {
-                for (int i = 0; i < 16 * YACLConfig.INSTANCE.getConfig().GlobalMultiplier; ++i) {
-                    double f;
-                    double e;
-                    double d = this.random.nextFloat() * 2.0f - 1.0f;
-                    if (d * d + (e = this.random.nextFloat() * 2.0f - 1.0f) * e + (f = this.random.nextFloat() * 2.0f - 1.0f) * f > 1.0)
-                        continue;
-                    double g = this.entity.offsetX(d / 4.0);
-                    double h = this.entity.getBodyY(0.5 + e / 4.0);
-                    double j = this.entity.offsetZ(f / 4.0);
-                    this.world.addParticle(this.parameters, false, g, h, j, d, e + 0.2, f);
-                }
-                ++this.emitterAge;
-                if (this.emitterAge >= this.maxEmitterAge) {
-                    this.markDead();
-                }
-            }
-        } else {
-            for (int i = 0; i < 16; ++i) {
-                double d = this.random.nextFloat() * 2.0F - 1.0F;
-                double e = this.random.nextFloat() * 2.0F - 1.0F;
-                double f = this.random.nextFloat() * 2.0F - 1.0F;
-                if (!(d * d + e * e + f * f > 1.0)) {
-                    double g = this.entity.offsetX(d / 4.0);
-                    double h = this.entity.getBodyY(0.5 + e / 4.0);
-                    double j = this.entity.offsetZ(f / 4.0);
-                    this.world.addParticle(this.parameters, false, g, h, j, d, e + 0.2, f);
-                }
-            }
-
-            ++this.emitterAge;
-            if (this.emitterAge >= this.maxEmitterAge) {
-                this.markDead();
-            }
+    @Redirect(method = "<init>(Lnet/minecraft/client/world/ClientWorld;Lnet/minecraft/entity/Entity;Lnet/minecraft/particle/ParticleEffect;ILnet/minecraft/util/math/Vec3d;)V", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/particle/EmitterParticle;tick()V"))
+    public void CustomTotemParticles$emitterInit(EmitterParticle instance) {
+        //silly easter egg, but also useful for debugging
+        if (YACLConfig.CONFIG.instance().multiplier == 0) {
+            world.addParticle(YACLConfig.CONFIG.instance().particleType.getParticleTypes(), true, entity.offsetX(random.nextFloat() * 2.0F - 1.0F / 4.0), entity.getBodyY((0.5 + random.nextFloat() * 2.0F - 1.0F / 4.0)), entity.offsetZ(random.nextFloat() * 2.0F - 1.0F / 4.0), random.nextFloat() * 2.0F - 1.0F, random.nextFloat() * 2.0F - 1.0F + 0.2F, random.nextFloat() * 2.0F - 1.0F);
+            markDead();
         }
     }
 
+    @Inject(method = "tick", at = @At("HEAD"), cancellable = true)
+    public void CustomTotemParticles$emitterTick(CallbackInfo ci) {
+        if (YACLConfig.CONFIG.instance().modEnabled) {
+            if (parameters == ParticleTypes.TOTEM_OF_UNDYING) {
+                if (YACLConfig.CONFIG.instance().useEmitter) {
+                    maxEmitterAge = YACLConfig.CONFIG.instance().emitterLifetime;
+                }
+                for (int i = 0; i < 16 * YACLConfig.CONFIG.instance().multiplier; ++i) {
+                    double d = random.nextFloat() * 2.0F - 1.0F;
+                    double e = random.nextFloat() * 2.0F - 1.0F;
+                    double f = random.nextFloat() * 2.0F - 1.0F;
+                    if (d * d + e * e + f * f > 1)
+                        continue;
+                    double g = entity.offsetX(d / 4.0);
+                    double h = entity.getBodyY((0.5 + e / 4.0));
+                    double j = entity.offsetZ(f / 4.0);
+                    if (YACLConfig.CONFIG.instance().useEmitter) {
+                        if (!YACLConfig.CONFIG.instance().emitterMovesWithPlayer) {
+                            g = x;
+                            h = y;
+                            j = z;
+                        }
+                        h += YACLConfig.CONFIG.instance().emitterYOffset;
+                    }
+                    world.addParticle(YACLConfig.CONFIG.instance().particleType.getParticleTypes(), true, g, h, j, d, e + 0.2F, f);
+                }
+                ++emitterAge;
+                if (emitterAge >= maxEmitterAge) {
+                    markDead();
+                }
+                ci.cancel();
+            }
+        }
+    }
 }

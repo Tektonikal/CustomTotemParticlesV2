@@ -1,9 +1,9 @@
 {
   "schemaVersion": 1,
-  "id": "customparticles",
+  "id": "custom-totem-particles",
   "version": "${version}",
   "name": "Custom Totem Particles",
-  "description": "Make your totem particles flashier!",
+  "description": "Spice up your totem particles!",
   "authors": [
     "Tektonikal"
   ],
@@ -24,20 +24,22 @@
   "depends": {
     "fabricloader": ">=${loader_version}",
     "fabric": "*",
-    "minecraft": "${minecraft_version}"
+    "minecraft": "${minecraft_version}",
+    "yet_another_config_lib_v3": "*"
   },
   "contact": {
-    "homepage": "https://modrinth.com/mod/custom-totems",
-    "issues": "discordapp.com/users/600422323308331176"
+    "homepage": "https://modrinth.com/mod/custom-totem-particles",
+    "issues": "https://discord.gg/HyUVJYeKS5"
   },
   "breaks": {
-    "sakuraparticles":"*"
+    "sakuraparticles": "*",
+    "customtotems": "*",
+    "totem-party": "*",
+    "confetti": "*",
+    "totemparticleschanger": "*",
+    "postmortalparticles": "*"
   },
-  "custom": {
-    "modmenu": {
-    }
-  },
-  "dependencies": {
-    "yet_another_config_lib_v3": "*"
+  "recommends": {
+    "popanim": "*"
   }
 }
