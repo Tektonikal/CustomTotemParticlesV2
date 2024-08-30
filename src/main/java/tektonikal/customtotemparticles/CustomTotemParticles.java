@@ -84,7 +84,7 @@ public class CustomTotemParticles implements ModInitializer {
                     return;
                 }
                 if (field.get(null).equals(o_mainColorList)) {
-                    Color[] cols = new Color[MathHelper.SafeRandom(3, 5)];
+                    Color[] cols = new Color[Utils.SafeRandom(3, 5)];
                     for (int i = 0; i < cols.length; i++) {
                         cols[i] = new Color((int) (Math.random() * 0x1000000));
                     }
@@ -103,13 +103,13 @@ public class CustomTotemParticles implements ModInitializer {
                         ((Option<Color>) field.get(null)).requestSet(new Color((int) (Math.random() * 0x1000000)));
                         break;
                     case "dev.isxander.yacl3.gui.controllers.slider.FloatSliderController":
-                        ((Option<Float>) field.get(null)).requestSet(MathHelper.SafeRandom((float) ((FloatSliderController) ((Option<Float>) field.get(null)).controller()).min(), (float) ((FloatSliderController) ((Option<Float>) field.get(null)).controller()).max()));
+                        ((Option<Float>) field.get(null)).requestSet(Utils.SafeRandom((float) ((FloatSliderController) ((Option<Float>) field.get(null)).controller()).min(), (float) ((FloatSliderController) ((Option<Float>) field.get(null)).controller()).max()));
                         break;
                     case "dev.isxander.yacl3.gui.controllers.slider.IntegerSliderController":
-                        ((Option<Integer>) field.get(null)).requestSet(MathHelper.SafeRandom((int) ((IntegerSliderController) ((Option<Integer>) field.get(null)).controller()).min(), (int) ((IntegerSliderController) ((Option<Integer>) field.get(null)).controller()).max()));
+                        ((Option<Integer>) field.get(null)).requestSet(Utils.SafeRandom((int) ((IntegerSliderController) ((Option<Integer>) field.get(null)).controller()).min(), (int) ((IntegerSliderController) ((Option<Integer>) field.get(null)).controller()).max()));
                         break;
                     case "dev.isxander.yacl3.gui.controllers.cycling.EnumController":
-                        ((Option<TimingMode>) field.get(null)).requestSet(TimingMode.values()[MathHelper.SafeRandom(0, TimingMode.values().length - 1)]);
+                        ((Option<TimingMode>) field.get(null)).requestSet(TimingMode.values()[Utils.SafeRandom(0, TimingMode.values().length - 1)]);
                         break;
                     default:
                         System.out.println("huhhhhh????");

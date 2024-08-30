@@ -17,12 +17,13 @@ import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
+import tektonikal.customtotemparticles.Utils;
 import tektonikal.customtotemparticles.config.YACLConfig;
 
 import java.awt.*;
 
-import static tektonikal.customtotemparticles.MathHelper.SafeRandom;
-import static tektonikal.customtotemparticles.MathHelper.rand;
+import static tektonikal.customtotemparticles.Utils.SafeRandom;
+import static tektonikal.customtotemparticles.Utils.rand;
 
 
 @Mixin(TotemParticle.class)
@@ -42,7 +43,7 @@ public abstract class TotemParticleMixin extends AnimatedParticle {
     @Unique
     public float[] vals = new float[3];
     @Unique
-    private float rot = SafeRandom(YACLConfig.CONFIG.instance().minRotationSpeed, YACLConfig.CONFIG.instance().maxRotationSpeed);
+    private float rotationSpeed = SafeRandom(YACLConfig.CONFIG.instance().minRotationSpeed, YACLConfig.CONFIG.instance().maxRotationSpeed);
     //Maybe optimize this later?
     @Unique
     private Color mainCol;
@@ -105,9 +106,9 @@ public abstract class TotemParticleMixin extends AnimatedParticle {
                     setColor(mainCol.getRGB());
                 }
                 if (YACLConfig.CONFIG.instance().useGradients) {
-                    varRed = tektonikal.customtotemparticles.MathHelper.SafeRandom(-YACLConfig.CONFIG.instance().variationAmount.getRed(), YACLConfig.CONFIG.instance().variationAmount.getRed()) / 255.0F;
-                    varGreen = tektonikal.customtotemparticles.MathHelper.SafeRandom(-YACLConfig.CONFIG.instance().variationAmount.getGreen(), YACLConfig.CONFIG.instance().variationAmount.getGreen()) / 255.0F;
-                    varBlue = tektonikal.customtotemparticles.MathHelper.SafeRandom(-YACLConfig.CONFIG.instance().variationAmount.getBlue(), YACLConfig.CONFIG.instance().variationAmount.getBlue()) / 255.0F;
+                    varRed = Utils.SafeRandom(-YACLConfig.CONFIG.instance().variationAmount.getRed(), YACLConfig.CONFIG.instance().variationAmount.getRed()) / 255.0F;
+                    varGreen = Utils.SafeRandom(-YACLConfig.CONFIG.instance().variationAmount.getGreen(), YACLConfig.CONFIG.instance().variationAmount.getGreen()) / 255.0F;
+                    varBlue = Utils.SafeRandom(-YACLConfig.CONFIG.instance().variationAmount.getBlue(), YACLConfig.CONFIG.instance().variationAmount.getBlue()) / 255.0F;
                     if (!YACLConfig.CONFIG.instance().doRainbow) {
                         red2 = MathHelper.clamp(red + varRed, 0, 1);
                         green2 = MathHelper.clamp(green + varGreen, 0, 1);
@@ -120,13 +121,13 @@ public abstract class TotemParticleMixin extends AnimatedParticle {
                     alpha = SafeRandom(YACLConfig.CONFIG.instance().minAlpha, YACLConfig.CONFIG.instance().maxAlpha);
                 }
             }
-
+            this.tick();
         }
     }
 
     //https://github.com/Splzh/ClearHitboxes/blob/main/src/main/java/splash/utils/ColorUtils.java !!
     @Unique
-    private int getRainbowCol(int delay) {
+    private static int getRainbowCol(int delay) {
         return getRainbow(-((System.currentTimeMillis() + delay) % 10000L / 10000.0f) * YACLConfig.CONFIG.instance().rainbowSpeed);
     }
 
@@ -190,25 +191,26 @@ public abstract class TotemParticleMixin extends AnimatedParticle {
                     return;
                 }
                 if (YACLConfig.CONFIG.instance().doRainbow && YACLConfig.CONFIG.instance().rainbowOverTime) {
-                    //TODO: make it work correctly when start/end colors are disabled
+                    //this probably isn't the best way to go about this, but it gets the job done
                     switch (YACLConfig.CONFIG.instance().rainbowMode) {
                         case END:
-                            yeah(age > (float) maxAge * YACLConfig.CONFIG.instance().fadeOutTime);
+                            yeah(age > (float) maxAge * YACLConfig.CONFIG.instance().fadeOutTime && YACLConfig.CONFIG.instance().doOutColor);
                             break;
                         case START:
-                            yeah(age < (float) maxAge * YACLConfig.CONFIG.instance().fadeToTime);
+                            yeah(age < (float) maxAge * YACLConfig.CONFIG.instance().fadeToTime && YACLConfig.CONFIG.instance().doStartColor);
                             break;
                         case MAIN:
-                            yeah(age > (float) maxAge * YACLConfig.CONFIG.instance().fadeToTime && age < (float) maxAge * YACLConfig.CONFIG.instance().fadeOutTime);
+                            yeah((!YACLConfig.CONFIG.instance().doStartColor || age > (float) maxAge * YACLConfig.CONFIG.instance().fadeToTime) && age < (float) maxAge * YACLConfig.CONFIG.instance().fadeOutTime);
                             break;
                         case UNTIL_END:
                             yeah(age < (float) maxAge * YACLConfig.CONFIG.instance().fadeOutTime);
                             break;
                         case AFTER_START:
-                            yeah(age > (float) maxAge * YACLConfig.CONFIG.instance().fadeToTime);
+                            yeah(!YACLConfig.CONFIG.instance().doStartColor || age > (float) maxAge * YACLConfig.CONFIG.instance().fadeToTime);
                             break;
+                        //honestly, if you're using this mode and turn off start/end, you're the moron. Any weird behaviour here isn't my problem.
                         case EXCLUDING_MAIN:
-                            yeah(age > (float) maxAge * YACLConfig.CONFIG.instance().fadeOutTime || age > (float) maxAge * YACLConfig.CONFIG.instance().fadeToTime);
+                            yeah((age > (float) maxAge * YACLConfig.CONFIG.instance().fadeOutTime || age < (float) maxAge * YACLConfig.CONFIG.instance().fadeToTime));
                             break;
                         default:
                             setRainbowColor();
@@ -235,34 +237,18 @@ public abstract class TotemParticleMixin extends AnimatedParticle {
                 if (YACLConfig.CONFIG.instance().useRotation) {
                     if (YACLConfig.CONFIG.instance().rotateOverTime) {
                         if (!onGround || YACLConfig.CONFIG.instance().rotateOnGround) {
-                            angle += rot;
+                            angle += rotationSpeed;
                         }
                         if (age > maxAge * YACLConfig.CONFIG.instance().rotateAtPercent) {
                             if (YACLConfig.CONFIG.instance().smartROT) {
-                                if (YACLConfig.CONFIG.instance().rotateOverTimeAmount < 0) {
-                                    //terrible impl but it works, I'll refactor later
-                                    if (rot > 0) {
-                                        if (rot - Math.abs(YACLConfig.CONFIG.instance().rotateOverTimeAmount) < 0) {
-                                            rot = 0;
-                                        } else {
-                                            rot -= Math.abs(YACLConfig.CONFIG.instance().rotateOverTimeAmount);
-                                        }
-                                    } else {
-                                        if (rot + Math.abs(YACLConfig.CONFIG.instance().rotateOverTimeAmount) > 0) {
-                                            rot = 0;
-                                        } else {
-                                            rot += Math.abs(YACLConfig.CONFIG.instance().rotateOverTimeAmount);
-                                        }
-                                    }
-                                } else {
-                                    if (rot > 0) {
-                                        rot += Math.abs(YACLConfig.CONFIG.instance().rotateOverTimeAmount);
-                                    } else {
-                                        rot -= Math.abs(YACLConfig.CONFIG.instance().rotateOverTimeAmount);
-                                    }
+                                if (YACLConfig.CONFIG.instance().rotateOverTimeAmount >= 0) {
+                                    rotationSpeed += YACLConfig.CONFIG.instance().rotateOverTimeAmount;
+                                }
+                                if (YACLConfig.CONFIG.instance().rotateOverTimeAmount <= 0) {
+                                    rotationSpeed -= YACLConfig.CONFIG.instance().rotateOverTimeAmount;
                                 }
                             } else {
-                                rot += YACLConfig.CONFIG.instance().rotateOverTimeAmount;
+                                rotationSpeed += YACLConfig.CONFIG.instance().rotateOverTimeAmount;
                             }
                         }
                     }
@@ -365,3 +351,88 @@ public abstract class TotemParticleMixin extends AnimatedParticle {
         vertexConsumer.vertex(vector3fs[3].x(), vector3fs[3].y(), vector3fs[3].z()).texture(k, n).color(MathHelper.lerp(0.5F, MathHelper.lerp(tickDelta, prevRed, red), MathHelper.lerp(tickDelta, prevRed2, red2)), MathHelper.lerp(0.5F, MathHelper.lerp(tickDelta, prevGreen, green), MathHelper.lerp(tickDelta, prevGreen2, green2)), MathHelper.lerp(0.5F, MathHelper.lerp(tickDelta, prevBlue, blue), MathHelper.lerp(tickDelta, prevBlue2, blue2)), MathHelper.lerp(tickDelta, prevAlpha, alpha)).light(o).next();
     }
 }
+/*
+{
+  "modEnabled": true,
+  "particleType": "TOTEM_OF_UNDYING",
+  "multiplier": 0.9,
+  "showOwnParticles": true,
+  "useEmitter": true,
+  "emitterLifetime": 25,
+  "emitterYOffset": -0.2,
+  "emitterMovesWithPlayer": false,
+  "hideOnGround": false,
+  "useCollisions": true,
+  "lightLevel": 255,
+  "useColor": true,
+  "blendColors": true,
+  "doStartColor": true,
+  "startColor": -8355585,
+  "fadeToSpeed": 0.3,
+  "fadeToTime": 0.0,
+  "mainColorList": [
+    -8388353,
+    -16744193
+  ],
+  "doOutColor": false,
+  "fadeOutSpeed": 0.5,
+  "fadeOutTime": 0.75,
+  "outTargetColor": -8355712,
+  "doRainbow": true,
+  "startColorRainbow": false,
+  "rainbowOverTime": true,
+  "rainbowMode": "AFTER_START",
+  "rainbowSpeed": 5.0,
+  "syncRainbow": false,
+  "useRainbowGradient": false,
+  "rainbowGradientDelay": 150,
+  "useGradients": true,
+  "gradientMode": "ALL",
+  "variationAmount": -11513776,
+  "useAlpha": true,
+  "minAlpha": 1.0,
+  "maxAlpha": 1.0,
+  "loseAlpha": true,
+  "alphaOutSpeed": -0.03,
+  "alphaOutTime": 0.5,
+  "fadeOnGround": true,
+  "onGroundFade": -0.05,
+  "useScale": true,
+  "minScale": 0.25,
+  "maxScale": 0.75,
+  "scaleOverTime": true,
+  "scaleAmount": -0.02,
+  "scaleAtPercent": 0.75,
+  "scaleOnGround": true,
+  "onGroundScale": -0.01,
+  "useAge": true,
+  "minAge": 40,
+  "maxAge": 45,
+  "useMovement": true,
+  "minVelocityMultiplier": 0.25,
+  "maxVelocityMultiplier": 0.6,
+  "customVelocity": true,
+  "minXVelocity": -0.65,
+  "maxXVelocity": 0.65,
+  "minYVelocity": 0.25,
+  "maxYVelocity": 1.5,
+  "minZVelocity": -0.65,
+  "maxZVelocity": 0.65,
+  "useGravity": true,
+  "minUpwardsAccel": -0.3,
+  "maxUpwardsAccel": 0.75,
+  "gravityOverTime": true,
+  "changeGravityAtPercent": 0.65,
+  "gravityOverTimeAmount": -0.5,
+  "useRotation": true,
+  "minStartRotation": -360,
+  "maxStartRotation": 360,
+  "rotateOverTime": true,
+  "minRotationSpeed": -0.35,
+  "maxRotationSpeed": 0.35,
+  "rotateAtPercent": 0.65000004,
+  "rotateOverTimeAmount": 0.14999999,
+  "smartROT": true,
+  "rotateOnGround": false
+}
+ */
