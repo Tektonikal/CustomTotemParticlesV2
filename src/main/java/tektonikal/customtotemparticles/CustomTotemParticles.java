@@ -125,11 +125,6 @@ public class CustomTotemParticles implements ModInitializer {
 }
 /*
 todo:
-        add new particle types - V3
-        gradients - V3
-        improvements to rainbow - V3
-        profiles - later
-        replace texture instead of particle - later, this shit looks hard as fuck
         reflection for listeners - nahhhhh
         localization file - laterrrrrr
  */

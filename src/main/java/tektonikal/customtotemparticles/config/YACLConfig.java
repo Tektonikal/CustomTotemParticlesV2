@@ -61,13 +61,13 @@ public class YACLConfig {
             @SerialEntry public boolean blendColors = true;
     //Starting Color
             @SerialEntry public boolean doStartColor = true;
-                @SerialEntry public Color startColor = java.awt.Color.decode("#444444");
+                @SerialEntry public Color startColor = java.awt.Color.decode("#FFFFFF");
                 @SerialEntry public float fadeToSpeed = 0.3f;
-                @SerialEntry public float fadeToTime = 0.65F;
+                @SerialEntry public float fadeToTime = 0F;
     //Main Color
-            @SerialEntry public List<Color> mainColorList = Arrays.asList(new Color(128, 0, 255), new Color(0, 128, 255));
+            @SerialEntry public List<Color> mainColorList = Arrays.asList(new Color(255, 0, 255), new Color(0, 0, 255));
     //Color Transition 2
-            @SerialEntry public boolean doOutColor = false;
+            @SerialEntry public boolean doOutColor = true;
                 @SerialEntry public float fadeOutSpeed = 0.2f;
                 @SerialEntry public float fadeOutTime = 0.65F;
                 @SerialEntry public Color outTargetColor = java.awt.Color.decode("#000000");
@@ -76,17 +76,17 @@ public class YACLConfig {
                 @SerialEntry public boolean startColorRainbow = true;
                 @SerialEntry public boolean rainbowOverTime = true;
                     @SerialEntry public TimingMode rainbowMode = TimingMode.MAIN;
-                    @SerialEntry public float rainbowSpeed = 2F;
+                    @SerialEntry public int rainbowSpeed = 2;
                     @SerialEntry public boolean syncRainbow = true;
                     @SerialEntry public boolean useRainbowGradient = true;
                         @SerialEntry public int rainbowGradientDelay = 150;
     //Gradients
             @SerialEntry public boolean useGradients = true;
-                @SerialEntry public TimingMode gradientMode = TimingMode.ALL;
-                @SerialEntry public Color variationAmount = new Color(16, 16, 16);
+                @SerialEntry public boolean gradientFromMainCols = true;
+                @SerialEntry public Color variationAmount = new Color(64, 64, 64);
     //Alpha
             @SerialEntry public boolean useAlpha = true;
-                @SerialEntry public float minAlpha = 0.5f;
+                @SerialEntry public float minAlpha = 0.75f;
                 @SerialEntry public float maxAlpha = 1f;
     //Fade Out
                 @SerialEntry public boolean loseAlpha = true;
@@ -153,7 +153,7 @@ public class YACLConfig {
     public static Option<ParticleEnum> o_particleType = Option.<ParticleEnum>createBuilder()
             .name(Text.of("Particle Type"))
             .description(particleEnum -> OptionDescription.createBuilder()
-                    .text(Text.of("Replaces the totem particle with a different one. The particles will retain their default properties."))
+                    .text(Text.of("[DEPRECATED] Replaces the totem particle with a different one. The particles will retain their default properties. It's suggested to instead just provide your own textures."))
                     .image(particleEnum.getIdentifier(), 1, 1)
                     .build())
             .binding(ParticleEnum.TOTEM_OF_UNDYING, () -> CONFIG.instance().particleType, newVal -> CONFIG.instance().particleType = newVal)
@@ -239,7 +239,7 @@ public class YACLConfig {
     public static Option<Color> o_StartColor = Option.<Color>createBuilder()
             .name(Text.of("Starting Color"))
             .description(OptionDescription.of(Text.of("The color to fade to.")))
-            .binding(Color.decode("#444444"), () -> CONFIG.instance().startColor, newVal -> CONFIG.instance().startColor = newVal)
+            .binding(Color.decode("#FFFFFF"), () -> CONFIG.instance().startColor, newVal -> CONFIG.instance().startColor = newVal)
             .controller(ColorControllerBuilder::create)
             .build();
     public static Option<Float> o_fadeToSpeed = Option.<Float>createBuilder()
@@ -251,21 +251,21 @@ public class YACLConfig {
     public static Option<Float> o_fadeToTime = Option.<Float>createBuilder()
             .name(Text.of("Fade At %"))
             .description(OptionDescription.of(Text.of("At what percentage of the particle's lifetime to fade to the main color.")))
-            .binding(0.65f, () -> CONFIG.instance().fadeToTime, newVal -> CONFIG.instance().fadeToTime = newVal)
+            .binding(0f, () -> CONFIG.instance().fadeToTime, newVal -> CONFIG.instance().fadeToTime = newVal)
             .controller(floatOption -> FloatSliderControllerBuilder.create(floatOption).range(0f, 0.5F).step(0.05f).formatValue(val -> Text.of(String.format("%.0f", val * 100) + "%")))
             .build();
     public static ListOption<Color> o_mainColorList = ListOption.<Color>createBuilder()
             .name(Text.of("Main Color"))
             .description(OptionDescription.of(Text.of("The main color for the particle. If \"Blend colors\" is enabled, only the first 2 colors will be used. Otherwise, a random color will be picked.")))
             .controller(ColorControllerBuilder::create)
-            .binding(Arrays.asList(new Color(128, 0, 255), new Color(0, 128, 255)), () -> CONFIG.instance().mainColorList, newVal -> CONFIG.instance().mainColorList = newVal)
+            .binding(Arrays.asList(new Color(255, 0, 255), new Color(0, 0, 255)), () -> CONFIG.instance().mainColorList, newVal -> CONFIG.instance().mainColorList = newVal)
             .initial(() -> new Color((int) (Math.random() * 0x1000000)))
             .collapsed(!CONFIG.instance().modEnabled || !CONFIG.instance().useColor)
             .build();
     public static Option<Boolean> o_doOutColor = Option.<Boolean>createBuilder()
             .name(Text.of("Enabled"))
             .description(OptionDescription.of(Text.of("Enable a fade out into the final color.")))
-            .binding(false, () -> CONFIG.instance().doOutColor, newVal -> CONFIG.instance().doOutColor = newVal)
+            .binding(true, () -> CONFIG.instance().doOutColor, newVal -> CONFIG.instance().doOutColor = newVal)
             .controller(TickBoxControllerBuilder::create)
             .build();
     public static Option<Color> o_outTargetColor = Option.<Color>createBuilder()
@@ -310,11 +310,11 @@ public class YACLConfig {
             .binding(TimingMode.MAIN, () -> CONFIG.instance().rainbowMode, newVal -> CONFIG.instance().rainbowMode = newVal)
             .controller(option -> EnumControllerBuilder.create(option).enumClass(TimingMode.class))
             .build();
-    public static Option<Float> o_rainbowSpeed = Option.<Float>createBuilder()
+    public static Option<Integer> o_rainbowSpeed = Option.<Integer>createBuilder()
             .name(Text.of("Speed"))
             .description(OptionDescription.of(Text.of("How fast the particle changes color.")))
-            .binding(2F, () -> CONFIG.instance().rainbowSpeed, newVal -> CONFIG.instance().rainbowSpeed = newVal)
-            .controller(floatOption -> FloatSliderControllerBuilder.create(floatOption).range(0.1F, 5F).step(0.1F).formatValue(val -> Text.of(String.format("%.1f", val) + "x")))
+            .binding(2, () -> CONFIG.instance().rainbowSpeed, newVal -> CONFIG.instance().rainbowSpeed = newVal)
+            .controller(intOption -> IntegerSliderControllerBuilder.create(intOption).range(1, 10).step(1).formatValue(val -> Text.of(val + "x")))
             .build();
     public static Option<Boolean> o_syncRainbow = Option.<Boolean>createBuilder()
             .name(Text.of("Sync"))
@@ -330,7 +330,7 @@ public class YACLConfig {
             .build();
     public static Option<Integer> o_rainbowGradientDelay = Option.<Integer>createBuilder()
             .name(Text.of("Delay"))
-            .description(OptionDescription.of(Text.of("blehhhh :p")))
+            .description(OptionDescription.of(Text.of("Rainbow gradient's delay")))
             .binding(150, () -> CONFIG.instance().rainbowGradientDelay, newVal -> CONFIG.instance().rainbowGradientDelay = newVal)
             .controller(intOption -> IntegerSliderControllerBuilder.create(intOption).range(0, 500).step(5))
             .build();
@@ -340,14 +340,14 @@ public class YACLConfig {
             .binding(true, () -> CONFIG.instance().useGradients, newVal -> CONFIG.instance().useGradients = newVal)
             .controller(TickBoxControllerBuilder::create)
             .build();
-    public static Option<TimingMode> o_gradientMode = Option.<TimingMode>createBuilder()
-            .name(Text.of("Mode"))
-            .binding(TimingMode.ALL, () -> CONFIG.instance().gradientMode, newVal -> CONFIG.instance().gradientMode = newVal)
-            .controller(option -> EnumControllerBuilder.create(option).enumClass(TimingMode.class))
+    public static Option<Boolean> o_gradientFromMainCols = Option.<Boolean>createBuilder()
+            .name(Text.of("Pick From Starting Colors"))
+            .binding(true, () -> CONFIG.instance().gradientFromMainCols, newVal -> CONFIG.instance().gradientFromMainCols = newVal)
+            .controller(TickBoxControllerBuilder::create)
             .build();
     public static Option<Color> o_variationAmount = Option.<Color>createBuilder()
             .name(Text.of("Variation"))
-            .binding(new Color(16, 16, 16), () -> CONFIG.instance().variationAmount, newVal -> CONFIG.instance().variationAmount = newVal)
+            .binding(new Color(64, 64, 64), () -> CONFIG.instance().variationAmount, newVal -> CONFIG.instance().variationAmount = newVal)
             .controller(ColorControllerBuilderImpl::new)
             .build();
     public static Option<Boolean> o_useAlpha = Option.<Boolean>createBuilder()
@@ -359,7 +359,7 @@ public class YACLConfig {
     public static Option<Float> o_minAlpha = Option.<Float>createBuilder()
             .name(Text.of("Minimum Alpha"))
             .description(OptionDescription.of(Text.of("The minimum starting opacity of the particle.")))
-            .binding(0.5f, () -> CONFIG.instance().minAlpha, newVal -> CONFIG.instance().minAlpha = newVal)
+            .binding(0.75f, () -> CONFIG.instance().minAlpha, newVal -> CONFIG.instance().minAlpha = newVal)
             .controller(floatOption -> FloatSliderControllerBuilder.create(floatOption).range(0f, 1f).step(0.05f).formatValue(val -> Text.of((int) (val * 100) + "%")))
             .build();
     public static Option<Float> o_maxAlpha = Option.<Float>createBuilder()
@@ -733,15 +733,14 @@ public class YACLConfig {
         } else if (booleanOption.equals(o_useRainbowGradient)) {
             o_rainbowGradientDelay.setAvailable(o_useRainbowGradient.available() && aBoolean);
         } else if (booleanOption.equals(o_useGradients)) {
+            o_gradientFromMainCols.setAvailable(o_useGradients.available() && aBoolean);
             o_variationAmount.setAvailable(o_useGradients.available() && aBoolean);
-            o_gradientMode.setAvailable(o_useGradients.available() && aBoolean);
         }
     }
 
     public static Screen getConfigScreen(Screen parent) {
         //JESUS FUCKING CHRIST I JUST WANT TO FINISH WITH THE UPDATE PLEASE I THOUGHT IT WOULDN'T BE THIS HARD
-        return YetAnotherConfigLib.create(CONFIG, ((defaults, config, builder) -> builder
-                        //LIES! LIES! THIS TITLE SERVES NO PURPOSE! IT'S ONLY USED FOR NARRATION! AAAAAAAAAAAAAAAHH NIGHTMARE NIGHTMARE NIGHTMARE!!!!! I HATE THE ANTICHRIST!!
+        return YetAnotherConfigLib.create(CONFIG, ((defaults, config, builder) -> builder//LIES! LIES! THIS TITLE SERVES NO PURPOSE! IT'S ONLY USED FOR NARRATION! AAAAAAAAAAAAAAAHH NIGHTMARE NIGHTMARE NIGHTMARE!!!!! I HATE THE ANTICHRIST!!
                         //ISXANDER WHY WOULD YOU DO THIS TO ME
                         //GOD WHY HAVE YOU ALLOWED ME TO LEARN COMPUTER SCIENCE
                         //AND WHY DID YOU CURSE ME WITH SUCH STUPIDITY
@@ -781,7 +780,7 @@ public class YACLConfig {
                                                 .action((yaclScreen, buttonOption) -> MinecraftClient.getInstance().keyboard.setClipboard(gson.toJson(CONFIG.instance())))
                                                 .build())
                                         .option(ButtonOption.createBuilder()
-                                                .name(Text.translatable("Load Config From Clipboard").formatted(Formatting.DARK_RED, Formatting.BOLD))
+                                                .name(Text.literal("Load Config From Clipboard").formatted(Formatting.DARK_RED, Formatting.BOLD))
                                                 .description(OptionDescription.of(Text.of("Loads a configuration from your clipboard if it's valid. WARNING: LOADING A VALID CONFIGURATION WILL OVERWRITE YOUR CONFIGURATION FILE.")))
                                                 .action((yaclScreen, buttonOption) -> {
                                                     //this sucks but it works!!
@@ -841,7 +840,7 @@ public class YACLConfig {
                                         .name(Text.of("Gradients"))
                                         .collapsed(!CONFIG.instance().modEnabled || !CONFIG.instance().useColor)
                                         .option(o_useGradients)
-                                        .option(o_gradientMode)
+                                        .option(o_gradientFromMainCols)
                                         .option(o_variationAmount)
                                         .build())
                                 .group(OptionGroup.createBuilder()

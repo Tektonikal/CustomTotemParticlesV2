@@ -47,6 +47,9 @@ public abstract class TotemParticleMixin extends AnimatedParticle {
     //Maybe optimize this later?
     @Unique
     private Color mainCol;
+    @Unique
+    Color col2;
+
 
     protected TotemParticleMixin(ClientWorld world, double x, double y, double z, SpriteProvider spriteProvider, float upwardsAcceleration) {
         super(world, x, y, z, spriteProvider, upwardsAcceleration);
@@ -97,6 +100,7 @@ public abstract class TotemParticleMixin extends AnimatedParticle {
                     } else {
                         mainCol = (YACLConfig.CONFIG.instance().mainColorList.get(rand.nextInt(YACLConfig.CONFIG.instance().mainColorList.size())));
                     }
+                    col2 = (YACLConfig.CONFIG.instance().mainColorList.get(rand.nextInt(YACLConfig.CONFIG.instance().mainColorList.size())));
                 } else {
                     mainCol = Color.RED;
                 }
@@ -106,16 +110,13 @@ public abstract class TotemParticleMixin extends AnimatedParticle {
                     setColor(mainCol.getRGB());
                 }
                 if (YACLConfig.CONFIG.instance().useGradients) {
-                    varRed = Utils.SafeRandom(-YACLConfig.CONFIG.instance().variationAmount.getRed(), YACLConfig.CONFIG.instance().variationAmount.getRed()) / 255.0F;
-                    varGreen = Utils.SafeRandom(-YACLConfig.CONFIG.instance().variationAmount.getGreen(), YACLConfig.CONFIG.instance().variationAmount.getGreen()) / 255.0F;
-                    varBlue = Utils.SafeRandom(-YACLConfig.CONFIG.instance().variationAmount.getBlue(), YACLConfig.CONFIG.instance().variationAmount.getBlue()) / 255.0F;
-                    if (!YACLConfig.CONFIG.instance().doRainbow) {
-                        red2 = MathHelper.clamp(red + varRed, 0, 1);
-                        green2 = MathHelper.clamp(green + varGreen, 0, 1);
-                        blue2 = MathHelper.clamp(blue + varBlue, 0, 1);
-                    } else {
-
-                    }
+                    //divide twice to limit variation amount
+                    varRed = Utils.SafeRandom(-YACLConfig.CONFIG.instance().variationAmount.getRed(), YACLConfig.CONFIG.instance().variationAmount.getRed()) / 510F;
+                    varGreen = Utils.SafeRandom(-YACLConfig.CONFIG.instance().variationAmount.getGreen(), YACLConfig.CONFIG.instance().variationAmount.getGreen()) / 510F;
+                    varBlue = Utils.SafeRandom(-YACLConfig.CONFIG.instance().variationAmount.getBlue(), YACLConfig.CONFIG.instance().variationAmount.getBlue()) / 510F;
+                    red2 = red;
+                    green2 = green;
+                    blue2 = blue;
                 }
                 if (YACLConfig.CONFIG.instance().useAlpha) {
                     alpha = SafeRandom(YACLConfig.CONFIG.instance().minAlpha, YACLConfig.CONFIG.instance().maxAlpha);
@@ -241,11 +242,20 @@ public abstract class TotemParticleMixin extends AnimatedParticle {
                         }
                         if (age > maxAge * YACLConfig.CONFIG.instance().rotateAtPercent) {
                             if (YACLConfig.CONFIG.instance().smartROT) {
-                                if (YACLConfig.CONFIG.instance().rotateOverTimeAmount >= 0) {
-                                    rotationSpeed += YACLConfig.CONFIG.instance().rotateOverTimeAmount;
-                                }
-                                if (YACLConfig.CONFIG.instance().rotateOverTimeAmount <= 0) {
-                                    rotationSpeed -= YACLConfig.CONFIG.instance().rotateOverTimeAmount;
+                                if (rotationSpeed != 0) {
+                                    if (YACLConfig.CONFIG.instance().rotateOverTimeAmount > 0) {
+                                        if (rotationSpeed > 0) {
+                                            rotationSpeed += YACLConfig.CONFIG.instance().rotateOverTimeAmount;
+                                        } else if (rotationSpeed < 0) {
+                                            rotationSpeed -= YACLConfig.CONFIG.instance().rotateOverTimeAmount;
+                                        }
+                                    } else if (YACLConfig.CONFIG.instance().rotateOverTimeAmount < 0) {
+                                        if (rotationSpeed > 0) {
+                                            rotationSpeed = MathHelper.clamp(rotationSpeed + YACLConfig.CONFIG.instance().rotateOverTimeAmount, 0, 360);
+                                        } else if (rotationSpeed < 0) {
+                                            rotationSpeed = MathHelper.clamp(rotationSpeed - YACLConfig.CONFIG.instance().rotateOverTimeAmount, -360, 0);
+                                        }
+                                    }
                                 }
                             } else {
                                 rotationSpeed += YACLConfig.CONFIG.instance().rotateOverTimeAmount;
@@ -271,13 +281,20 @@ public abstract class TotemParticleMixin extends AnimatedParticle {
     private void setRainbowColor() {
         if (YACLConfig.CONFIG.instance().syncRainbow) {
             setColor(getRainbowCol(0));
+            setSecondaryColor(getRainbowCol(YACLConfig.CONFIG.instance().rainbowGradientDelay));
         } else {
             Color.RGBtoHSB((int) (red * 255), (int) (green * 255), (int) (blue * 255), vals);
-            if (vals[0] + (1 * YACLConfig.CONFIG.instance().rainbowSpeed) / 360F > 1) {
-                vals[0] = 0;
-            }
-            setColor(MathHelper.hsvToRgb(vals[0] + (1 * YACLConfig.CONFIG.instance().rainbowSpeed) / 360F, vals[1], vals[2]));
+            vals[0] += ((YACLConfig.CONFIG.instance().rainbowSpeed) / 100F);
+            setColor(Color.getHSBColor(vals[0], vals[1], vals[2]).getRGB());
+            setSecondaryColor(Color.getHSBColor(vals[0] + (YACLConfig.CONFIG.instance().rainbowGradientDelay / 10F), vals[1], vals[2]).getRGB());
         }
+    }
+
+    @Unique
+    private void setSecondaryColor(int rgbHex) {
+        red2 = (float) ((rgbHex & 0xFF0000) >> 16) / 255.0f;
+        green2 = (float) ((rgbHex & 0xFF00) >> 8) / 255.0f;
+        blue2 = (float) ((rgbHex & 0xFF)) / 255.0f;
     }
 
     @Unique
@@ -286,16 +303,17 @@ public abstract class TotemParticleMixin extends AnimatedParticle {
             red = MathHelper.lerp(YACLConfig.CONFIG.instance().fadeToSpeed, red, mainCol.getRed() / 255.0F);
             green = MathHelper.lerp(YACLConfig.CONFIG.instance().fadeToSpeed, green, mainCol.getGreen() / 255.0F);
             blue = MathHelper.lerp(YACLConfig.CONFIG.instance().fadeToSpeed, blue, mainCol.getBlue() / 255.0F);
+            red2 = MathHelper.lerp(YACLConfig.CONFIG.instance().fadeToSpeed, red2, col2.getRed() / 255.0F);
+            green2 = MathHelper.lerp(YACLConfig.CONFIG.instance().fadeToSpeed, green2, col2.getGreen() / 255.0F);
+            blue2 = MathHelper.lerp(YACLConfig.CONFIG.instance().fadeToSpeed, blue2, col2.getBlue() / 255.0F);
         }
         if (age > (float) maxAge * YACLConfig.CONFIG.instance().fadeOutTime && YACLConfig.CONFIG.instance().doOutColor && age > maxAge * 0.5F) {
             red = MathHelper.lerp(YACLConfig.CONFIG.instance().fadeOutSpeed, red, YACLConfig.CONFIG.instance().outTargetColor.getRed() / 255.0f);
             green = MathHelper.lerp(YACLConfig.CONFIG.instance().fadeOutSpeed, green, YACLConfig.CONFIG.instance().outTargetColor.getGreen() / 255.0f);
             blue = MathHelper.lerp(YACLConfig.CONFIG.instance().fadeOutSpeed, blue, YACLConfig.CONFIG.instance().outTargetColor.getBlue() / 255.0f);
-        }
-        if (YACLConfig.CONFIG.instance().useGradients) {
-            red2 = MathHelper.clamp(red + varRed, 0, 1);
-            green2 = MathHelper.clamp(green + varGreen, 0, 1);
-            blue2 = MathHelper.clamp(blue + varBlue, 0, 1);
+            red2 = MathHelper.lerp(YACLConfig.CONFIG.instance().fadeOutSpeed, red2, YACLConfig.CONFIG.instance().outTargetColor.getRed() / 255.0f);
+            green2 = MathHelper.lerp(YACLConfig.CONFIG.instance().fadeOutSpeed, green2, YACLConfig.CONFIG.instance().outTargetColor.getGreen() / 255.0f);
+            blue2 = MathHelper.lerp(YACLConfig.CONFIG.instance().fadeOutSpeed, blue2, YACLConfig.CONFIG.instance().outTargetColor.getBlue() / 255.0f);
         }
     }
 
@@ -316,11 +334,18 @@ public abstract class TotemParticleMixin extends AnimatedParticle {
     }
 
     @Override
-    public void buildGeometry(VertexConsumer vertexConsumer, Camera camera, float tickDelta) {
+    public void render(VertexConsumer vertexConsumer, Camera camera, float tickDelta) {
         Vec3d vec3d = camera.getPos();
         float f = (float) (MathHelper.lerp(tickDelta, this.prevPosX, this.x) - vec3d.getX());
         float g = (float) (MathHelper.lerp(tickDelta, this.prevPosY, this.y) - vec3d.getY());
         float h = (float) (MathHelper.lerp(tickDelta, this.prevPosZ, this.z) - vec3d.getZ());
+//        Quaternionf quaternionf;
+//        if (this.angle == 0.0F) {
+//            quaternionf = camera.getRotation();
+//        } else {
+//            quaternionf = new Quaternionf(camera.getRotation());
+//            quaternionf.rotateZ(MathHelper.lerp(tickDelta, this.prevAngle, this.angle));
+//        }
         this.getRotator().setRotation(rotation, camera, tickDelta);
         if (this.angle != 0.0F) {
             this.rotation.rotateZ(MathHelper.lerp(tickDelta, this.prevAngle, this.angle));
@@ -331,7 +356,7 @@ public abstract class TotemParticleMixin extends AnimatedParticle {
 
         for (int j = 0; j < 4; ++j) {
             Vector3f vector3f = vector3fs[j];
-            vector3f.rotate(this.rotation);
+            vector3f.rotate(rotation);
             vector3f.mul(i);
             vector3f.add(f, g, h);
         }
@@ -342,97 +367,12 @@ public abstract class TotemParticleMixin extends AnimatedParticle {
         float n = this.getMaxV();
         int o = this.getBrightness(tickDelta);
         //main col
-        vertexConsumer.vertex(vector3fs[0].x(), vector3fs[0].y(), vector3fs[0].z()).texture(l, n).color(MathHelper.lerp(tickDelta, prevRed, red), MathHelper.lerp(tickDelta, prevGreen, green), MathHelper.lerp(tickDelta, prevBlue, blue), MathHelper.lerp(tickDelta, prevAlpha, alpha)).light(o).next();
+        vertexConsumer.vertex(vector3fs[0].x(), vector3fs[0].y(), vector3fs[0].z()).texture(l, n).color(MathHelper.lerp(tickDelta, prevRed, red), MathHelper.lerp(tickDelta, prevGreen, green), MathHelper.lerp(tickDelta, prevBlue, blue), MathHelper.lerp(tickDelta, prevAlpha, alpha)).light(o);
         //halfway
-        vertexConsumer.vertex(vector3fs[1].x(), vector3fs[1].y(), vector3fs[1].z()).texture(l, m).color(MathHelper.lerp(0.5F, MathHelper.lerp(tickDelta, prevRed, red), MathHelper.lerp(tickDelta, prevRed2, red2)), MathHelper.lerp(0.5F, MathHelper.lerp(tickDelta, prevGreen, green), MathHelper.lerp(tickDelta, prevGreen2, green2)), MathHelper.lerp(0.5F, MathHelper.lerp(tickDelta, prevBlue, blue), MathHelper.lerp(tickDelta, prevBlue2, blue2)), MathHelper.lerp(tickDelta, prevAlpha, alpha)).light(o).next();
+        vertexConsumer.vertex(vector3fs[1].x(), vector3fs[1].y(), vector3fs[1].z()).texture(l, m).color(MathHelper.lerp(0.5F, MathHelper.lerp(tickDelta, prevRed, red), MathHelper.lerp(tickDelta, prevRed2, red2)), MathHelper.lerp(0.5F, MathHelper.lerp(tickDelta, prevGreen, green), MathHelper.lerp(tickDelta, prevGreen2, green2)), MathHelper.lerp(0.5F, MathHelper.lerp(tickDelta, prevBlue, blue), MathHelper.lerp(tickDelta, prevBlue2, blue2)), MathHelper.lerp(tickDelta, prevAlpha, alpha)).light(o);
         //second col
-        vertexConsumer.vertex(vector3fs[2].x(), vector3fs[2].y(), vector3fs[2].z()).texture(k, m).color(MathHelper.lerp(tickDelta, prevRed2, red2), MathHelper.lerp(tickDelta, prevGreen2, green2), MathHelper.lerp(tickDelta, prevBlue2, blue2), MathHelper.lerp(tickDelta, prevAlpha, alpha)).light(o).next();
+        vertexConsumer.vertex(vector3fs[2].x(), vector3fs[2].y(), vector3fs[2].z()).texture(k, m).color(MathHelper.lerp(tickDelta, prevRed2, red2), MathHelper.lerp(tickDelta, prevGreen2, green2), MathHelper.lerp(tickDelta, prevBlue2, blue2), MathHelper.lerp(tickDelta, prevAlpha, alpha)).light(o);
         //halfway
-        vertexConsumer.vertex(vector3fs[3].x(), vector3fs[3].y(), vector3fs[3].z()).texture(k, n).color(MathHelper.lerp(0.5F, MathHelper.lerp(tickDelta, prevRed, red), MathHelper.lerp(tickDelta, prevRed2, red2)), MathHelper.lerp(0.5F, MathHelper.lerp(tickDelta, prevGreen, green), MathHelper.lerp(tickDelta, prevGreen2, green2)), MathHelper.lerp(0.5F, MathHelper.lerp(tickDelta, prevBlue, blue), MathHelper.lerp(tickDelta, prevBlue2, blue2)), MathHelper.lerp(tickDelta, prevAlpha, alpha)).light(o).next();
+        vertexConsumer.vertex(vector3fs[3].x(), vector3fs[3].y(), vector3fs[3].z()).texture(k, n).color(MathHelper.lerp(0.5F, MathHelper.lerp(tickDelta, prevRed, red), MathHelper.lerp(tickDelta, prevRed2, red2)), MathHelper.lerp(0.5F, MathHelper.lerp(tickDelta, prevGreen, green), MathHelper.lerp(tickDelta, prevGreen2, green2)), MathHelper.lerp(0.5F, MathHelper.lerp(tickDelta, prevBlue, blue), MathHelper.lerp(tickDelta, prevBlue2, blue2)), MathHelper.lerp(tickDelta, prevAlpha, alpha)).light(o);
     }
 }
-/*
-{
-  "modEnabled": true,
-  "particleType": "TOTEM_OF_UNDYING",
-  "multiplier": 0.9,
-  "showOwnParticles": true,
-  "useEmitter": true,
-  "emitterLifetime": 25,
-  "emitterYOffset": -0.2,
-  "emitterMovesWithPlayer": false,
-  "hideOnGround": false,
-  "useCollisions": true,
-  "lightLevel": 255,
-  "useColor": true,
-  "blendColors": true,
-  "doStartColor": true,
-  "startColor": -8355585,
-  "fadeToSpeed": 0.3,
-  "fadeToTime": 0.0,
-  "mainColorList": [
-    -8388353,
-    -16744193
-  ],
-  "doOutColor": false,
-  "fadeOutSpeed": 0.5,
-  "fadeOutTime": 0.75,
-  "outTargetColor": -8355712,
-  "doRainbow": true,
-  "startColorRainbow": false,
-  "rainbowOverTime": true,
-  "rainbowMode": "AFTER_START",
-  "rainbowSpeed": 5.0,
-  "syncRainbow": false,
-  "useRainbowGradient": false,
-  "rainbowGradientDelay": 150,
-  "useGradients": true,
-  "gradientMode": "ALL",
-  "variationAmount": -11513776,
-  "useAlpha": true,
-  "minAlpha": 1.0,
-  "maxAlpha": 1.0,
-  "loseAlpha": true,
-  "alphaOutSpeed": -0.03,
-  "alphaOutTime": 0.5,
-  "fadeOnGround": true,
-  "onGroundFade": -0.05,
-  "useScale": true,
-  "minScale": 0.25,
-  "maxScale": 0.75,
-  "scaleOverTime": true,
-  "scaleAmount": -0.02,
-  "scaleAtPercent": 0.75,
-  "scaleOnGround": true,
-  "onGroundScale": -0.01,
-  "useAge": true,
-  "minAge": 40,
-  "maxAge": 45,
-  "useMovement": true,
-  "minVelocityMultiplier": 0.25,
-  "maxVelocityMultiplier": 0.6,
-  "customVelocity": true,
-  "minXVelocity": -0.65,
-  "maxXVelocity": 0.65,
-  "minYVelocity": 0.25,
-  "maxYVelocity": 1.5,
-  "minZVelocity": -0.65,
-  "maxZVelocity": 0.65,
-  "useGravity": true,
-  "minUpwardsAccel": -0.3,
-  "maxUpwardsAccel": 0.75,
-  "gravityOverTime": true,
-  "changeGravityAtPercent": 0.65,
-  "gravityOverTimeAmount": -0.5,
-  "useRotation": true,
-  "minStartRotation": -360,
-  "maxStartRotation": 360,
-  "rotateOverTime": true,
-  "minRotationSpeed": -0.35,
-  "maxRotationSpeed": 0.35,
-  "rotateAtPercent": 0.65000004,
-  "rotateOverTimeAmount": 0.14999999,
-  "smartROT": true,
-  "rotateOnGround": false
-}
- */

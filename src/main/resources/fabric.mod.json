@@ -38,8 +38,5 @@
     "confetti": "*",
     "totemparticleschanger": "*",
     "postmortalparticles": "*"
-  },
-  "recommends": {
-    "popanim": "*"
   }
 }

@@ -43,7 +43,7 @@ public abstract class EmitterParticleMixin extends NoRenderParticle {
     public void CustomTotemParticles$emitterInit(EmitterParticle instance) {
         //silly easter egg, but also useful for debugging
         if (YACLConfig.CONFIG.instance().multiplier == 0) {
-            world.addParticle(YACLConfig.CONFIG.instance().particleType.getParticleTypes(), true, entity.offsetX(random.nextFloat() * 2.0F - 1.0F / 4.0), entity.getBodyY((0.5 + random.nextFloat() * 2.0F - 1.0F / 4.0)), entity.offsetZ(random.nextFloat() * 2.0F - 1.0F / 4.0), random.nextFloat() * 2.0F - 1.0F, random.nextFloat() * 2.0F - 1.0F + 0.2F, random.nextFloat() * 2.0F - 1.0F);
+            world.addParticle(YACLConfig.CONFIG.instance().particleType.getParticleTypes(), true, true, entity.getX() + (random.nextFloat() * 2.0F - 1.0F / 4.0), entity.getBodyY((0.5 + random.nextFloat() * 2.0F - 1.0F / 4.0)), entity.getZ() + (random.nextFloat() * 2.0F - 1.0F / 4.0), random.nextFloat() * 2.0F - 1.0F, random.nextFloat() * 2.0F - 1.0F + 0.2F, random.nextFloat() * 2.0F - 1.0F);
             markDead();
         }
     }
@@ -61,9 +61,9 @@ public abstract class EmitterParticleMixin extends NoRenderParticle {
                     double f = random.nextFloat() * 2.0F - 1.0F;
                     if (d * d + e * e + f * f > 1)
                         continue;
-                    double g = entity.offsetX(d / 4.0);
+                    double g = entity.getX() + (d / 4.0);
                     double h = entity.getBodyY((0.5 + e / 4.0));
-                    double j = entity.offsetZ(f / 4.0);
+                    double j = entity.getZ() + (f / 4.0);
                     if (YACLConfig.CONFIG.instance().useEmitter) {
                         if (!YACLConfig.CONFIG.instance().emitterMovesWithPlayer) {
                             g = x;
@@ -72,7 +72,7 @@ public abstract class EmitterParticleMixin extends NoRenderParticle {
                         }
                         h += YACLConfig.CONFIG.instance().emitterYOffset;
                     }
-                    world.addParticle(YACLConfig.CONFIG.instance().particleType.getParticleTypes(), true, g, h, j, d, e + 0.2F, f);
+                    world.addParticle(YACLConfig.CONFIG.instance().particleType.getParticleTypes(), true, true, g, h, j, d, e + 0.2F, f);
                 }
                 ++emitterAge;
                 if (emitterAge >= maxEmitterAge) {
