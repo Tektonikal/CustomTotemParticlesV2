@@ -339,19 +339,12 @@ public abstract class TotemParticleMixin extends AnimatedParticle {
         float f = (float) (MathHelper.lerp(tickDelta, this.prevPosX, this.x) - vec3d.getX());
         float g = (float) (MathHelper.lerp(tickDelta, this.prevPosY, this.y) - vec3d.getY());
         float h = (float) (MathHelper.lerp(tickDelta, this.prevPosZ, this.z) - vec3d.getZ());
-//        Quaternionf quaternionf;
-//        if (this.angle == 0.0F) {
-//            quaternionf = camera.getRotation();
-//        } else {
-//            quaternionf = new Quaternionf(camera.getRotation());
-//            quaternionf.rotateZ(MathHelper.lerp(tickDelta, this.prevAngle, this.angle));
-//        }
         this.getRotator().setRotation(rotation, camera, tickDelta);
         if (this.angle != 0.0F) {
             this.rotation.rotateZ(MathHelper.lerp(tickDelta, this.prevAngle, this.angle));
         }
 
-        Vector3f[] vector3fs = new Vector3f[]{new Vector3f(-1.0F, -1.0F, 0.0F), new Vector3f(-1.0F, 1.0F, 0.0F), new Vector3f(1.0F, 1.0F, 0.0F), new Vector3f(1.0F, -1.0F, 0.0F)};
+        Vector3f[] vector3fs = new Vector3f[]{new Vector3f(1.0F, -1.0F, 0.0F), new Vector3f(1.0F, 1.0F, 0.0F), new Vector3f(-1.0F, 1.0F, 0.0F), new Vector3f(-1.0F, -1.0F, 0.0F)};
         float i = this.getSize(tickDelta);
 
         for (int j = 0; j < 4; ++j) {
