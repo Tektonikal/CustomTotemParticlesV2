@@ -17,6 +17,7 @@ import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.text.Text;
 import net.minecraft.util.Formatting;
 import tektonikal.customtotemparticles.CustomTotemParticles;
+import tektonikal.customtotemparticles.annotation.Updatable;
 
 import java.awt.*;
 import java.io.IOException;
@@ -144,6 +145,7 @@ public class YACLConfig {
                     @SerialEntry public boolean rotateOnGround = false;
     //@formatter:on
     //begin programming war crime
+    @Updatable
     public static Option<Boolean> o_modEnabled = Option.<Boolean>createBuilder()
             .name(Text.of("Mod Enabled"))
             .description(OptionDescription.of(Text.of("Enables the mod globally.")))
@@ -176,6 +178,7 @@ public class YACLConfig {
             .binding(true, () -> CONFIG.instance().showOwnParticles, newVal -> CONFIG.instance().showOwnParticles = newVal)
             .controller(TickBoxControllerBuilder::create)
             .build();
+    @Updatable
     public static Option<Boolean> o_useEmitter = Option.<Boolean>createBuilder()
             .name(Text.of("Enabled"))
             .description(OptionDescription.of(Text.of("Enables this category.")))
@@ -218,6 +221,7 @@ public class YACLConfig {
             .binding(true, () -> CONFIG.instance().useCollisions, newVal -> CONFIG.instance().useCollisions = newVal)
             .controller(TickBoxControllerBuilder::create)
             .build();
+    @Updatable
     public static Option<Boolean> o_useColor = Option.<Boolean>createBuilder()
             .name(Text.of("Enabled"))
             .description(OptionDescription.of(Text.of("Enables this category.")))
@@ -230,6 +234,7 @@ public class YACLConfig {
             .binding(true, () -> CONFIG.instance().blendColors, newVal -> CONFIG.instance().blendColors = newVal)
             .controller(TickBoxControllerBuilder::create)
             .build();
+    @Updatable
     public static Option<Boolean> o_doStartColor = Option.<Boolean>createBuilder()
             .name(Text.of("Enabled"))
             .description(OptionDescription.of(Text.of("Enables a start color, that will fade into the main one.")))
@@ -262,6 +267,7 @@ public class YACLConfig {
             .initial(() -> new Color((int) (Math.random() * 0x1000000)))
             .collapsed(!CONFIG.instance().modEnabled || !CONFIG.instance().useColor)
             .build();
+    @Updatable
     public static Option<Boolean> o_doOutColor = Option.<Boolean>createBuilder()
             .name(Text.of("Enabled"))
             .description(OptionDescription.of(Text.of("Enable a fade out into the final color.")))
@@ -286,6 +292,7 @@ public class YACLConfig {
             .binding(0.65f, () -> CONFIG.instance().fadeOutTime, newVal -> CONFIG.instance().fadeOutTime = newVal)
             .controller(floatOption -> FloatSliderControllerBuilder.create(floatOption).range(0.5f, 1F).step(0.05f).formatValue(val -> Text.of(String.format("%.0f", val * 100) + "%")))
             .build();
+    @Updatable
     public static Option<Boolean> o_doRainbow = Option.<Boolean>createBuilder()
             .name(Text.of("Enabled"))
             .description(OptionDescription.of(Text.of("Enables this category.")))
@@ -298,6 +305,7 @@ public class YACLConfig {
             .binding(false, () -> CONFIG.instance().startColorRainbow, newVal -> CONFIG.instance().startColorRainbow = newVal)
             .controller(TickBoxControllerBuilder::create)
             .build();
+    @Updatable
     public static Option<Boolean> o_rainbowOverTime = Option.<Boolean>createBuilder()
             .name(Text.of("Rainbow Over Time"))
             .description(OptionDescription.of(Text.of("Makes the particle change its color over time with rainbow colors.")))
@@ -322,6 +330,7 @@ public class YACLConfig {
             .binding(false, () -> CONFIG.instance().syncRainbow, newVal -> CONFIG.instance().syncRainbow = newVal)
             .controller(TickBoxControllerBuilder::create)
             .build();
+    @Updatable
     public static Option<Boolean> o_useRainbowGradient = Option.<Boolean>createBuilder()
             .name(Text.of("Gradient"))
             .description(OptionDescription.of(Text.of("Adds a rainbow gradient to your particles.")))
@@ -334,6 +343,7 @@ public class YACLConfig {
             .binding(150, () -> CONFIG.instance().rainbowGradientDelay, newVal -> CONFIG.instance().rainbowGradientDelay = newVal)
             .controller(intOption -> IntegerSliderControllerBuilder.create(intOption).range(0, 500).step(5))
             .build();
+    @Updatable
     public static Option<Boolean> o_useGradients = Option.<Boolean>createBuilder()
             .name(Text.of("Use Gradients"))
             .description(OptionDescription.of(Text.of("Enable gradients.")))
@@ -350,6 +360,7 @@ public class YACLConfig {
             .binding(new Color(64, 64, 64), () -> CONFIG.instance().variationAmount, newVal -> CONFIG.instance().variationAmount = newVal)
             .controller(ColorControllerBuilderImpl::new)
             .build();
+    @Updatable
     public static Option<Boolean> o_useAlpha = Option.<Boolean>createBuilder()
             .name(Text.of("Enabled"))
             .description(OptionDescription.of(Text.of("Whether to modify the particle's alpha value.")))
@@ -368,6 +379,7 @@ public class YACLConfig {
             .binding(1f, () -> CONFIG.instance().maxAlpha, newVal -> CONFIG.instance().maxAlpha = newVal)
             .controller(floatOption -> FloatSliderControllerBuilder.create(floatOption).range(0f, 1f).step(0.05f).formatValue(val -> Text.of((int) (val * 100) + "%")))
             .build();
+    @Updatable
     public static Option<Boolean> o_loseAlpha = Option.<Boolean>createBuilder()
             .name(Text.of("Enabled"))
             .description(OptionDescription.of(Text.of("Whether the particle loses opacity over time.")))
@@ -386,6 +398,7 @@ public class YACLConfig {
             .binding(0.5f, () -> CONFIG.instance().alphaOutTime, newVal -> CONFIG.instance().alphaOutTime = newVal)
             .controller(floatOption -> FloatSliderControllerBuilder.create(floatOption).range(0F, 1F).step(0.05f).formatValue(val -> Text.of(String.format("%.0f", val * 100) + "%")))
             .build();
+    @Updatable
     public static Option<Boolean> o_fadeOnGround = Option.<Boolean>createBuilder()
             .name(Text.of("Enabled"))
             .description(OptionDescription.of(Text.of("Whether the particle will change its opacity when it lands on the ground.")))
@@ -398,6 +411,7 @@ public class YACLConfig {
             .binding(-0.05f, () -> CONFIG.instance().onGroundFade, newVal -> CONFIG.instance().onGroundFade = newVal)
             .controller(floatOption -> FloatSliderControllerBuilder.create(floatOption).range(-0.1f, 0.1f).step(0.01f).formatValue(val -> Text.of(String.format("%.2f", val))))
             .build();
+    @Updatable
     public static Option<Boolean> o_useScale = Option.<Boolean>createBuilder()
             .name(Text.of("Enabled"))
             .description(OptionDescription.of(Text.of("Enables this category.")))
@@ -416,6 +430,7 @@ public class YACLConfig {
             .binding(0.75f, () -> CONFIG.instance().maxScale, newVal -> CONFIG.instance().maxScale = newVal)
             .controller(floatOption -> FloatSliderControllerBuilder.create(floatOption).range(0.05f, 2f).step(0.05f).formatValue(val -> Text.of(String.format("%.2f", val))))
             .build();
+    @Updatable
     public static Option<Boolean> o_scaleOverTime = Option.<Boolean>createBuilder()
             .name(Text.of("Enabled"))
             .description(OptionDescription.of(Text.of("Change the particle's scale at a certain speed at a certain time.")))
@@ -434,6 +449,7 @@ public class YACLConfig {
             .binding(0.75f, () -> CONFIG.instance().scaleAtPercent, newVal -> CONFIG.instance().scaleAtPercent = newVal)
             .controller(floatOption -> FloatSliderControllerBuilder.create(floatOption).range(0f, 1F).step(0.05f).formatValue(val -> Text.of(String.format("%.0f", val * 100) + "%")))
             .build();
+    @Updatable
     public static Option<Boolean> o_scaleOnGround = Option.<Boolean>createBuilder()
             .name(Text.of("Enabled"))
             .description(OptionDescription.of(Text.of("Whether to scale the particle when it collides with the ground.")))
@@ -446,6 +462,7 @@ public class YACLConfig {
             .binding(-0.01f, () -> CONFIG.instance().onGroundScale, newVal -> CONFIG.instance().onGroundScale = newVal)
             .controller(floatOption -> FloatSliderControllerBuilder.create(floatOption).range(-0.2f, 0.2f).step(0.01f).formatValue(val -> Text.of(String.format("%.2f", val))))
             .build();
+    @Updatable
     public static Option<Boolean> o_useAge = Option.<Boolean>createBuilder()
             .name(Text.of("Enabled"))
             .description(OptionDescription.of(Text.of("Whether to enable this category.")))
@@ -463,6 +480,7 @@ public class YACLConfig {
             .binding(45, () -> CONFIG.instance().maxAge, newVal -> CONFIG.instance().maxAge = newVal)
             .controller(integerOption -> IntegerSliderControllerBuilder.create(integerOption).range(10, 200).step(5).formatValue(val -> Text.of(val + " ticks")))
             .build();
+    @Updatable
     public static Option<Boolean> o_useMovement = Option.<Boolean>createBuilder()
             .name(Text.of("Enabled"))
             .description(OptionDescription.of(Text.of("Enable this category.")))
@@ -481,6 +499,7 @@ public class YACLConfig {
             .binding(0.6f, () -> CONFIG.instance().maxVelocityMultiplier, newVal -> CONFIG.instance().maxVelocityMultiplier = newVal)
             .controller(floatOption -> FloatSliderControllerBuilder.create(floatOption).range(0f, 1f).step(0.05f).formatValue(val -> Text.of(String.format("%.2f", val))))
             .build();
+    @Updatable
     public static Option<Boolean> o_customVelocity = Option.<Boolean>createBuilder()
             .name(Text.of("Enabled"))
             .description(OptionDescription.of(Text.of("Whether to apply the velocity parameters below to the particle.")))
@@ -523,6 +542,7 @@ public class YACLConfig {
             .binding(0.65f, () -> CONFIG.instance().maxZVelocity, newVal -> CONFIG.instance().maxZVelocity = newVal)
             .controller(floatOption -> FloatSliderControllerBuilder.create(floatOption).range(-3f, 3f).step(0.05f).formatValue(val -> Text.of(String.format("%.2f", val))))
             .build();
+    @Updatable
     public static Option<Boolean> o_useGravity = Option.<Boolean>createBuilder()
             .name(Text.of("Enabled"))
             .description(OptionDescription.of(Text.of("Whether to modify the particle's gravity.")))
@@ -541,6 +561,7 @@ public class YACLConfig {
             .binding(0.75f, () -> CONFIG.instance().maxUpwardsAccel, newVal -> CONFIG.instance().maxUpwardsAccel = newVal)
             .controller(floatOption -> FloatSliderControllerBuilder.create(floatOption).range(-3f, 3f).step(0.05f).formatValue(val -> Text.of(String.format("%.2f", val))))
             .build();
+    @Updatable
     public static Option<Boolean> o_gravityOverTime = Option.<Boolean>createBuilder()
             .name(Text.of("Enabled"))
             .description(OptionDescription.of(Text.of("Whether gravity will change over time.")))
@@ -559,6 +580,7 @@ public class YACLConfig {
             .binding(-0.5f, () -> CONFIG.instance().gravityOverTimeAmount, newVal -> CONFIG.instance().gravityOverTimeAmount = newVal)
             .controller(floatOption -> FloatSliderControllerBuilder.create(floatOption).range(-0.5f, 0.5f).step(0.01f).formatValue(val -> Text.of(String.format("%.2f", val))))
             .build();
+    @Updatable
     public static Option<Boolean> o_useRotation = Option.<Boolean>createBuilder()
             .name(Text.of("Enabled"))
             .description(OptionDescription.of(Text.of("Whether to modify the particle's rotation.")))
@@ -577,6 +599,7 @@ public class YACLConfig {
             .binding(360, () -> CONFIG.instance().maxStartRotation, newVal -> CONFIG.instance().maxStartRotation = newVal)
             .controller(intOption -> IntegerSliderControllerBuilder.create(intOption).range(-360, 360).step(5))
             .build();
+    @Updatable
     public static Option<Boolean> o_rotateOverTime = Option.<Boolean>createBuilder()
             .name(Text.of("Enabled"))
             .description(OptionDescription.of(Text.of("Enables the particle to rotate over time.")))
