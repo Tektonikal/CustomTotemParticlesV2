@@ -2,21 +2,25 @@ package tektonikal.customtotemparticles.config;
 
 import dev.isxander.yacl3.api.NameableEnum;
 import net.minecraft.text.Text;
+import org.jetbrains.annotations.NotNull;
 
 public enum TimingMode implements NameableEnum {
-    ALL, START, MAIN, END, UNTIL_END, AFTER_START, EXCLUDING_MAIN;
+    ALL(Text.literal("All")),
+    START(Text.literal("Start Only")),
+    MAIN(Text.literal("Main Only")),
+    END(Text.literal("End Only")),
+    UNTIL_END(Text.literal("Until End")),
+    AFTER_START(Text.literal("After Start")),
+    EXCLUDING_MAIN(Text.literal("Excluding Main"));
+
+    private final @NotNull Text text;
+
+    TimingMode(@NotNull Text text) {
+        this.text = text;
+    }
 
     @Override
     public Text getDisplayName() {
-        return switch (name()) {
-            case "ALL" -> Text.literal("All");
-            case "START" -> Text.literal("Start Only");
-            case "MAIN" -> Text.literal("Main Only");
-            case "END" -> Text.literal("End Only");
-            case "UNTIL_END" -> Text.literal("Until End");
-            case "AFTER_START" -> Text.literal("After Start");
-            case "EXCLUDING_MAIN" -> Text.literal("Excluding Main");
-            default -> Text.literal("Erm, I think you did something wrong...");
-        };
+        return text;
     }
 }

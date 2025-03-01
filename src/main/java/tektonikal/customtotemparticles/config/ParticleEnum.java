@@ -5,37 +5,38 @@ import net.minecraft.particle.ParticleEffect;
 import net.minecraft.particle.ParticleTypes;
 import net.minecraft.text.Text;
 import net.minecraft.util.Identifier;
+import org.jetbrains.annotations.NotNull;
 
 public enum ParticleEnum implements NameableEnum {
-    TOTEM_OF_UNDYING, CRIT, ENCHANTED_HIT, EFFECT;
+    TOTEM_OF_UNDYING(Text.literal("Totem of Undying"), Identifier.of("textures/particle/glitter_7.png")),
+    CRIT(Text.literal("Crit"), Identifier.of("textures/particle/critical_hit.png")),
+    ENCHANTED_HIT(Text.literal("Potion Effect"), Identifier.of("textures/particle/enchanted_hit.png")),
+    EFFECT(Text.literal("Enchanted Hit"), Identifier.of("textures/particle/effect_5.png"));
+
+    private final @NotNull Text text;
+    private final @NotNull Identifier identifier;
+
+    ParticleEnum(@NotNull Text text, @NotNull Identifier identifier) {
+        this.text = text;
+        this.identifier = identifier;
+    }
 
     @Override
     public Text getDisplayName() {
-        return switch (name()) {
-            case "TOTEM_OF_UNDYING" -> Text.literal("Totem of Undying");
-            case "CRIT" -> Text.literal("Crit");
-            case "EFFECT" -> Text.literal("Potion Effect");
-            case "ENCHANTED_HIT" -> Text.literal("Enchanted Hit");
-            default -> Text.literal("Erm, I think you did something wrong...");
-        };
+        return text;
     }
 
     public ParticleEffect getParticleTypes() {
-        return switch (name()) {
-            case "CRIT" -> ParticleTypes.CRIT;
-            case "EFFECT" -> ParticleTypes.EFFECT;
-            case "ENCHANTED_HIT" -> ParticleTypes.ENCHANTED_HIT;
-            default -> ParticleTypes.TOTEM_OF_UNDYING;
+        return switch (this) {
+            case TOTEM_OF_UNDYING -> ParticleTypes.TOTEM_OF_UNDYING;
+            case CRIT -> ParticleTypes.CRIT;
+            case ENCHANTED_HIT -> ParticleTypes.ENCHANTED_HIT;
+            case EFFECT -> ParticleTypes.EFFECT;
         };
     }
 
-    public Identifier getIdentifier() {
-        return switch (name()) {
-            case "CRIT" -> Identifier.of("textures/particle/critical_hit.png");
-            case "EFFECT" -> Identifier.of("textures/particle/effect_5.png");
-            case "ENCHANTED_HIT" -> Identifier.of("textures/particle/enchanted_hit.png");
-            default -> Identifier.of("textures/particle/glitter_7.png");
-        };
+    public @NotNull Identifier getIdentifier() {
+        return identifier;
     }
 }
 
