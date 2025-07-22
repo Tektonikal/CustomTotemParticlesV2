@@ -43,7 +43,7 @@ public abstract class EmitterParticleMixin extends NoRenderParticle {
     public void CustomTotemParticles$emitterInit(EmitterParticle instance) {
         //silly easter egg, but also useful for debugging
         if (YACLConfig.CONFIG.instance().multiplier == 0) {
-            world.addParticle(YACLConfig.CONFIG.instance().particleType.getParticleTypes(), entity.getBodyX(random.nextFloat() * 2.0F - 1.0F / 4.0), entity.getBodyY((0.5 + random.nextFloat() * 2.0F - 1.0F / 4.0)), entity.getBodyZ(random.nextFloat() * 2.0F - 1.0F / 4.0), random.nextFloat() * 2.0F - 1.0F, random.nextFloat() * 2.0F - 1.0F + 0.2F, random.nextFloat() * 2.0F - 1.0F);
+            world.addParticleClient(YACLConfig.CONFIG.instance().particleType.getParticleTypes(), entity.getBodyX(random.nextFloat() * 2.0F - 1.0F / 4.0), entity.getBodyY((0.5 + random.nextFloat() * 2.0F - 1.0F / 4.0)), entity.getBodyZ(random.nextFloat() * 2.0F - 1.0F / 4.0), random.nextFloat() * 2.0F - 1.0F, random.nextFloat() * 2.0F - 1.0F + 0.2F, random.nextFloat() * 2.0F - 1.0F);
             markDead();
         }
     }
@@ -72,7 +72,7 @@ public abstract class EmitterParticleMixin extends NoRenderParticle {
                         }
                         h += YACLConfig.CONFIG.instance().emitterYOffset;
                     }
-                    world.addParticle(YACLConfig.CONFIG.instance().particleType.getParticleTypes(), g, h, j, d, e + 0.2F, f);
+                    world.addParticleClient(YACLConfig.CONFIG.instance().particleType.getParticleTypes(), g, h, j, d, e + 0.2F, f);
                 }
                 ++emitterAge;
                 if (emitterAge >= maxEmitterAge) {

@@ -22,6 +22,7 @@ import tektonikal.customtotemparticles.config.YACLConfig;
 
 import java.awt.*;
 
+import static net.minecraft.SharedConstants.CHUNK_WIDTH;
 import static tektonikal.customtotemparticles.Utils.SafeRandom;
 import static tektonikal.customtotemparticles.Utils.rand;
 
@@ -72,7 +73,7 @@ public abstract class TotemParticleMixin extends AnimatedParticle {
                 }
                 if (YACLConfig.CONFIG.instance().useRotation) {
                     angle = SafeRandom(YACLConfig.CONFIG.instance().minStartRotation, YACLConfig.CONFIG.instance().maxStartRotation);
-                    prevAngle = SafeRandom(YACLConfig.CONFIG.instance().minStartRotation, YACLConfig.CONFIG.instance().maxStartRotation);
+                    lastAngle = SafeRandom(YACLConfig.CONFIG.instance().minStartRotation, YACLConfig.CONFIG.instance().maxStartRotation);
                 }
             }
             if (YACLConfig.CONFIG.instance().useScale) {
@@ -165,14 +166,14 @@ public abstract class TotemParticleMixin extends AnimatedParticle {
         prevRed2 = red2;
         prevGreen2 = green2;
         prevBlue2 = blue2;
-        prevPosX = x;
-        prevPosY = y;
-        prevPosZ = z;
-        prevAngle = angle;
+        lastX = x;
+        lastY = y;
+        lastZ = z;
+        lastAngle = angle;
         prevScale = scale;
         velocityY -= 0.04 * (double) gravityStrength;
         move(velocityX, velocityY, velocityZ);
-        if (ascending && y == prevPosY) {
+        if (ascending && y == lastY) {
             velocityX *= 1.1;
             velocityZ *= 1.1;
         }
@@ -324,7 +325,9 @@ public abstract class TotemParticleMixin extends AnimatedParticle {
             return YACLConfig.CONFIG.instance().lightLevel;
         } else {
             BlockPos blockPos = BlockPos.ofFloored(x, y, z);
-            return world.isChunkLoaded(blockPos) ? WorldRenderer.getLightmapCoordinates(world, blockPos) : 0;
+            int chunkX = blockPos.getX() / CHUNK_WIDTH;
+            int chunkZ = blockPos.getZ() / CHUNK_WIDTH;
+            return world.isChunkLoaded(chunkX, chunkZ) ? WorldRenderer.getLightmapCoordinates(world, blockPos) : 0;
         }
     }
 
@@ -336,12 +339,12 @@ public abstract class TotemParticleMixin extends AnimatedParticle {
     @Override
     public void render(VertexConsumer vertexConsumer, Camera camera, float tickDelta) {
         Vec3d vec3d = camera.getPos();
-        float f = (float) (MathHelper.lerp(tickDelta, this.prevPosX, this.x) - vec3d.getX());
-        float g = (float) (MathHelper.lerp(tickDelta, this.prevPosY, this.y) - vec3d.getY());
-        float h = (float) (MathHelper.lerp(tickDelta, this.prevPosZ, this.z) - vec3d.getZ());
+        float f = (float) (MathHelper.lerp(tickDelta, this.lastX, this.x) - vec3d.getX());
+        float g = (float) (MathHelper.lerp(tickDelta, this.lastY, this.y) - vec3d.getY());
+        float h = (float) (MathHelper.lerp(tickDelta, this.lastZ, this.z) - vec3d.getZ());
         this.getRotator().setRotation(rotation, camera, tickDelta);
         if (this.angle != 0.0F) {
-            this.rotation.rotateZ(MathHelper.lerp(tickDelta, this.prevAngle, this.angle));
+            this.rotation.rotateZ(MathHelper.lerp(tickDelta, this.lastAngle, this.angle));
         }
 
         Vector3f[] vector3fs = new Vector3f[]{new Vector3f(1.0F, -1.0F, 0.0F), new Vector3f(1.0F, 1.0F, 0.0F), new Vector3f(-1.0F, 1.0F, 0.0F), new Vector3f(-1.0F, -1.0F, 0.0F)};
