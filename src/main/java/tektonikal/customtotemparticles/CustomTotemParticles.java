@@ -27,7 +27,6 @@ public class CustomTotemParticles implements ModInitializer {
 
     private static void armSecuritySystem() {
         //can't add listeners while options are created for my use-case, since not everything is fully initialized
-
         Arrays.stream(YACLConfig.class.getDeclaredFields())
                 .filter(field -> field.isAnnotationPresent(Updatable.class))
                 .forEach(field -> {
@@ -45,13 +44,13 @@ public class CustomTotemParticles implements ModInitializer {
         Arrays.stream(YACLConfig.class.getDeclaredFields())
                 .filter(field -> field.getName().startsWith("o_"))
                 .forEach(field -> {
-            try {
-                Object value = field.get(null);
-                ((Option) value).requestSet(((Option<?>) value).binding().getValue());
-            } catch (IllegalAccessException e) {
-                System.out.println("what the hell");
-            }
-        });
+                    try {
+                        Object value = field.get(null);
+                        ((Option) value).requestSet(((Option<?>) value).binding().getValue());
+                    } catch (IllegalAccessException e) {
+                        System.out.println("what the hell");
+                    }
+                });
     }
 
     public static void randomizeOptions() {
