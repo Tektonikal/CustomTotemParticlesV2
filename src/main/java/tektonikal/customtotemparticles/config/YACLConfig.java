@@ -301,14 +301,14 @@ public class YACLConfig {
     public static Option<Boolean> o_startColorRainbow = Option.<Boolean>createBuilder()
             .name(Component.nullToEmpty("Start Color"))
             .description(OptionDescription.of(Component.nullToEmpty("Sets the starting color of the particle to be a random color of the rainbow.")))
-            .binding(false, () -> CONFIG.instance().startColorRainbow, newVal -> CONFIG.instance().startColorRainbow = newVal)
+            .binding(true, () -> CONFIG.instance().startColorRainbow, newVal -> CONFIG.instance().startColorRainbow = newVal)
             .controller(TickBoxControllerBuilder::create)
             .build();
     @Updatable
     public static Option<Boolean> o_rainbowOverTime = Option.<Boolean>createBuilder()
             .name(Component.nullToEmpty("Rainbow Over Time"))
             .description(OptionDescription.of(Component.nullToEmpty("Makes the particle change its color over time with rainbow colors.")))
-            .binding(false, () -> CONFIG.instance().rainbowOverTime, newVal -> CONFIG.instance().rainbowOverTime = newVal)
+            .binding(true, () -> CONFIG.instance().rainbowOverTime, newVal -> CONFIG.instance().rainbowOverTime = newVal)
             .controller(TickBoxControllerBuilder::create)
             .build();
     public static Option<TimingMode> o_rainbowMode = Option.<TimingMode>createBuilder()
@@ -326,7 +326,7 @@ public class YACLConfig {
     public static Option<Boolean> o_syncRainbow = Option.<Boolean>createBuilder()
             .name(Component.nullToEmpty("Sync"))
             .description(OptionDescription.of(Component.nullToEmpty("Synchronizes the rainbow state of all particles.")))
-            .binding(false, () -> CONFIG.instance().syncRainbow, newVal -> CONFIG.instance().syncRainbow = newVal)
+            .binding(true, () -> CONFIG.instance().syncRainbow, newVal -> CONFIG.instance().syncRainbow = newVal)
             .controller(TickBoxControllerBuilder::create)
             .build();
     @Updatable

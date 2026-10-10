@@ -4,8 +4,8 @@ import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.particle.SimpleAnimatedParticle;
 import net.minecraft.client.particle.SpriteSet;
 import net.minecraft.client.particle.TotemParticle;
-import net.minecraft.client.renderer.LevelRenderer;
 import net.minecraft.core.BlockPos;
+import net.minecraft.util.LightCoordsUtil;
 import net.minecraft.util.Mth;
 import org.joml.Quaternionf;
 import org.joml.Vector3f;
@@ -298,13 +298,15 @@ public abstract class TotemParticleMixin extends SimpleAnimatedParticle {
 	@Unique
 	private void setRainbowColor() {
 		if (YACLConfig.CONFIG.instance().syncRainbow) {
-			setColor(getRainbowCol(0));
-			setSecondaryColor(getRainbowCol(YACLConfig.CONFIG.instance().rainbowGradientDelay));
+			int primary = getRainbowCol(0);
+			setColor(primary);
+			setSecondaryColor(YACLConfig.CONFIG.instance().useRainbowGradient ? getRainbowCol(YACLConfig.CONFIG.instance().rainbowGradientDelay) : primary);
 		} else {
 			Color.RGBtoHSB((int) (rCol * 255), (int) (gCol * 255), (int) (bCol * 255), vals);
 			vals[0] += ((YACLConfig.CONFIG.instance().rainbowSpeed) / 100F);
-			setColor(Color.getHSBColor(vals[0], vals[1], vals[2]).getRGB());
-			setSecondaryColor(Color.getHSBColor(vals[0] + (YACLConfig.CONFIG.instance().rainbowGradientDelay / 10F), vals[1], vals[2]).getRGB());
+			int primary = Color.getHSBColor(vals[0], vals[1], vals[2]).getRGB();
+			setColor(primary);
+			setSecondaryColor(YACLConfig.CONFIG.instance().useRainbowGradient ? Color.getHSBColor(vals[0] + (YACLConfig.CONFIG.instance().rainbowGradientDelay / 10F), vals[1], vals[2]).getRGB() : primary);
 		}
 	}
 
@@ -344,12 +346,14 @@ public abstract class TotemParticleMixin extends SimpleAnimatedParticle {
 
 	@Override
 	public int getLightCoords(float tint) {
-		if (YACLConfig.CONFIG.instance().modEnabled && YACLConfig.CONFIG.instance().lightLevel != -1) {
-			return YACLConfig.CONFIG.instance().lightLevel;
-		} else {
-			BlockPos blockPos = BlockPos.containing(x, y, z);
-			return level.hasChunkAt(blockPos) ? LevelRenderer.getLightCoords(level, blockPos) : 0;
+		if (!YACLConfig.CONFIG.instance().modEnabled) {
+			return super.getLightCoords(tint);
 		}
+		if (YACLConfig.CONFIG.instance().lightLevel != -1) {
+			return YACLConfig.CONFIG.instance().lightLevel;
+		}
+		BlockPos blockPos = BlockPos.containing(x, y, z);
+		return level.hasChunkAt(blockPos) ? LightCoordsUtil.getLightCoords(level, blockPos) : 0;
 	}
 
 	@Override
