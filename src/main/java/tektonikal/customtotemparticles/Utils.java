@@ -1,8 +1,7 @@
 package tektonikal.customtotemparticles;
 
-import net.minecraft.util.math.MathHelper;
-
 import java.util.Random;
+import net.minecraft.util.Mth;
 
 public class Utils {
 	public static Random rand = new Random();
@@ -13,7 +12,7 @@ public class Utils {
 	}
 
 	public static int clampToColor(float in) {
-		return (int) MathHelper.clamp(in * 255, 0, 255);
+		return (int) Mth.clamp(in * 255, 0, 255);
 	}
 
 	//this "works" but isn't fully correct according to my testing.

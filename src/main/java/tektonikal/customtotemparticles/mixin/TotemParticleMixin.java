@@ -1,15 +1,12 @@
 package tektonikal.customtotemparticles.mixin;
 
-import net.minecraft.client.particle.AnimatedParticle;
-import net.minecraft.client.particle.SpriteProvider;
+import net.minecraft.client.multiplayer.ClientLevel;
+import net.minecraft.client.particle.SimpleAnimatedParticle;
+import net.minecraft.client.particle.SpriteSet;
 import net.minecraft.client.particle.TotemParticle;
-import net.minecraft.client.render.Camera;
-import net.minecraft.client.render.VertexConsumer;
-import net.minecraft.client.render.WorldRenderer;
-import net.minecraft.client.world.ClientWorld;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.MathHelper;
-import net.minecraft.util.math.Vec3d;
+import net.minecraft.client.renderer.LevelRenderer;
+import net.minecraft.core.BlockPos;
+import net.minecraft.util.Mth;
 import org.joml.Quaternionf;
 import org.joml.Vector3f;
 import org.spongepowered.asm.mixin.Mixin;
@@ -25,13 +22,15 @@ import java.awt.*;
 import static tektonikal.customtotemparticles.Utils.SafeRandom;
 import static tektonikal.customtotemparticles.Utils.rand;
 
+import com.mojang.blaze3d.vertex.VertexConsumer;
+
 
 @Mixin(TotemParticle.class)
-public abstract class TotemParticleMixin extends AnimatedParticle {
+public abstract class TotemParticleMixin extends SimpleAnimatedParticle {
 	@Unique
 	private final Quaternionf rotation = new Quaternionf();
 	@Unique
-	public float prevScale = scale;
+	public float prevScale = quadSize;
 	@Unique
 	public float prevRed, prevGreen, prevBlue, prevAlpha;
 	@Unique
@@ -53,40 +52,40 @@ public abstract class TotemParticleMixin extends AnimatedParticle {
 //    private Quaternionf rot = new Quaternionf();
 
 
-	protected TotemParticleMixin(ClientWorld world, double x, double y, double z, SpriteProvider spriteProvider, float upwardsAcceleration) {
+	protected TotemParticleMixin(ClientLevel world, double x, double y, double z, SpriteSet spriteProvider, float upwardsAcceleration) {
 		super(world, x, y, z, spriteProvider, upwardsAcceleration);
 	}
 
 	//TODO: redirect constructor here
 	@Inject(at = @At("TAIL"), method = "<init>")
-	private void CustomTotemParticles$initParticle(ClientWorld world, double x, double y, double z, double velocityX, double velocityY, double velocityZ, SpriteProvider spriteProvider, CallbackInfo info) {
+	private void CustomTotemParticles$initParticle(ClientLevel world, double x, double y, double z, double velocityX, double velocityY, double velocityZ, SpriteSet spriteProvider, CallbackInfo info) {
 		if (YACLConfig.CONFIG.instance().modEnabled) {
-			collidesWithWorld = YACLConfig.CONFIG.instance().useCollisions;
+			hasPhysics = YACLConfig.CONFIG.instance().useCollisions;
 			if (YACLConfig.CONFIG.instance().useMovement) {
-				velocityMultiplier = SafeRandom(YACLConfig.CONFIG.instance().minVelocityMultiplier, YACLConfig.CONFIG.instance().maxVelocityMultiplier);
+				friction = SafeRandom(YACLConfig.CONFIG.instance().minVelocityMultiplier, YACLConfig.CONFIG.instance().maxVelocityMultiplier);
 				if (YACLConfig.CONFIG.instance().customVelocity) {
-					this.velocityZ = SafeRandom(YACLConfig.CONFIG.instance().minZVelocity, YACLConfig.CONFIG.instance().maxZVelocity);
-					this.velocityY = SafeRandom(YACLConfig.CONFIG.instance().minYVelocity, YACLConfig.CONFIG.instance().maxYVelocity);
-					this.velocityX = SafeRandom(YACLConfig.CONFIG.instance().minXVelocity, YACLConfig.CONFIG.instance().maxXVelocity);
+					this.zd = SafeRandom(YACLConfig.CONFIG.instance().minZVelocity, YACLConfig.CONFIG.instance().maxZVelocity);
+					this.yd = SafeRandom(YACLConfig.CONFIG.instance().minYVelocity, YACLConfig.CONFIG.instance().maxYVelocity);
+					this.xd = SafeRandom(YACLConfig.CONFIG.instance().minXVelocity, YACLConfig.CONFIG.instance().maxXVelocity);
 				}
 				if (YACLConfig.CONFIG.instance().useGravity) {
-					gravityStrength = SafeRandom(YACLConfig.CONFIG.instance().minUpwardsAccel, YACLConfig.CONFIG.instance().maxUpwardsAccel);
+					gravity = SafeRandom(YACLConfig.CONFIG.instance().minUpwardsAccel, YACLConfig.CONFIG.instance().maxUpwardsAccel);
 				}
 				if (YACLConfig.CONFIG.instance().useRotation) {
-					zRotation = SafeRandom(YACLConfig.CONFIG.instance().minStartRotation, YACLConfig.CONFIG.instance().maxStartRotation);
-					lastZRotation = SafeRandom(YACLConfig.CONFIG.instance().minStartRotation, YACLConfig.CONFIG.instance().maxStartRotation);
+					roll = SafeRandom(YACLConfig.CONFIG.instance().minStartRotation, YACLConfig.CONFIG.instance().maxStartRotation);
+					oRoll = SafeRandom(YACLConfig.CONFIG.instance().minStartRotation, YACLConfig.CONFIG.instance().maxStartRotation);
 				}
 			}
 			if (YACLConfig.CONFIG.instance().useScale) {
-				scale *= SafeRandom(YACLConfig.CONFIG.instance().minScale, YACLConfig.CONFIG.instance().maxScale);
+				quadSize *= SafeRandom(YACLConfig.CONFIG.instance().minScale, YACLConfig.CONFIG.instance().maxScale);
 			}
 			if (YACLConfig.CONFIG.instance().useAge) {
-				maxAge = SafeRandom(YACLConfig.CONFIG.instance().minAge, YACLConfig.CONFIG.instance().maxAge);
+				lifetime = SafeRandom(YACLConfig.CONFIG.instance().minAge, YACLConfig.CONFIG.instance().maxAge);
 			}
 			if (YACLConfig.CONFIG.instance().useColor) {
 				if (YACLConfig.CONFIG.instance().doRainbow) {
 					if (YACLConfig.CONFIG.instance().startColorRainbow) {
-						setColor(MathHelper.hsvToRgb((float) Math.random(), 1, 1));
+						setColor(Mth.hsvToRgb((float) Math.random(), 1, 1));
 					} else if (YACLConfig.CONFIG.instance().syncRainbow && YACLConfig.CONFIG.instance().rainbowOverTime) {
 						setColor(getRainbowCol(0));
 					}
@@ -107,9 +106,9 @@ public abstract class TotemParticleMixin extends AnimatedParticle {
 						varGreen = Utils.SafeRandom(-YACLConfig.CONFIG.instance().variationAmount.getGreen(), YACLConfig.CONFIG.instance().variationAmount.getGreen()) / 510F;
 						varBlue = Utils.SafeRandom(-YACLConfig.CONFIG.instance().variationAmount.getBlue(), YACLConfig.CONFIG.instance().variationAmount.getBlue()) / 510F;
 						col2 = new Color(Utils.clampToColor(mainCol.getRed() / 255F + varRed), Utils.clampToColor(mainCol.getGreen() / 255F + varGreen), Utils.clampToColor(mainCol.getBlue() / 255F + varBlue));
-						red2 = red;
-						green2 = green;
-						blue2 = blue;
+						red2 = rCol;
+						green2 = gCol;
+						blue2 = bCol;
 						prevRed2 = prevRed;
 						prevGreen2 = prevGreen;
 						prevBlue2 = prevBlue;
@@ -127,9 +126,9 @@ public abstract class TotemParticleMixin extends AnimatedParticle {
 				}
 			}
 //            rot.set(MinecraftClient.getInstance().gameRenderer.getCamera().getRotation());
-			red2 = red;
-			green2 = green;
-			blue2 = blue;
+			red2 = rCol;
+			green2 = gCol;
+			blue2 = bCol;
 			prevRed2 = prevRed;
 			prevGreen2 = prevGreen;
 			prevBlue2 = prevBlue;
@@ -165,68 +164,72 @@ public abstract class TotemParticleMixin extends AnimatedParticle {
 
 	@Override
 	public void tick() {
-		if (age++ >= maxAge || alpha <= 0 || scale <= 0 || (YACLConfig.CONFIG.instance().hideOnGround && onGround)) {
-			markDead();
+		if (!YACLConfig.CONFIG.instance().modEnabled) {
+			super.tick();
 			return;
 		}
-		prevRed = red;
-		prevGreen = green;
-		prevBlue = blue;
+		if (age++ >= lifetime || alpha <= 0 || quadSize <= 0 || (YACLConfig.CONFIG.instance().hideOnGround && onGround)) {
+			remove();
+			return;
+		}
+		prevRed = rCol;
+		prevGreen = gCol;
+		prevBlue = bCol;
 		prevAlpha = alpha;
 		if (YACLConfig.CONFIG.instance().useGradients) {
 			prevRed2 = red2;
 			prevGreen2 = green2;
 			prevBlue2 = blue2;
 		} else {
-			red2 = red;
-			green2 = green;
-			blue2 = blue;
+			red2 = rCol;
+			green2 = gCol;
+			blue2 = bCol;
 			prevRed2 = prevRed;
 			prevGreen2 = prevGreen;
 			prevBlue2 = prevBlue;
 		}
-		lastX = x;
-		lastY = y;
-		lastZ = z;
-		lastZRotation = zRotation;
-		prevScale = scale;
-		velocityY -= 0.04 * (double) gravityStrength;
-		move(velocityX, velocityY, velocityZ);
-		if (ascending && y == lastY) {
-			velocityX *= 1.1;
-			velocityZ *= 1.1;
+		xo = x;
+		yo = y;
+		zo = z;
+		oRoll = roll;
+		prevScale = quadSize;
+		yd -= 0.04 * (double) gravity;
+		move(xd, yd, zd);
+		if (speedUpWhenYMotionIsBlocked && y == yo) {
+			xd *= 1.1;
+			zd *= 1.1;
 		}
-		velocityX *= velocityMultiplier;
-		velocityY *= velocityMultiplier;
-		velocityZ *= velocityMultiplier;
+		xd *= friction;
+		yd *= friction;
+		zd *= friction;
 		if (onGround) {
-			velocityX *= 0.7f;
-			velocityZ *= 0.7f;
+			xd *= 0.7f;
+			zd *= 0.7f;
 		}
-		setSprite(spriteProvider.getSprite(this.age, this.maxAge));
+		setSprite(sprites.get(this.age, this.lifetime));
 		if (YACLConfig.CONFIG.instance().modEnabled) {
 			if (YACLConfig.CONFIG.instance().useColor) {
 				if (YACLConfig.CONFIG.instance().doRainbow && YACLConfig.CONFIG.instance().rainbowOverTime) {
 					//this probably isn't the best way to go about this, but it gets the job done
 					switch (YACLConfig.CONFIG.instance().rainbowMode) {
 						case END:
-							yeah(age > (float) maxAge * YACLConfig.CONFIG.instance().fadeOutTime && YACLConfig.CONFIG.instance().doOutColor);
+							yeah(age > (float) lifetime * YACLConfig.CONFIG.instance().fadeOutTime && YACLConfig.CONFIG.instance().doOutColor);
 							break;
 						case START:
-							yeah(age < (float) maxAge * YACLConfig.CONFIG.instance().fadeToTime && YACLConfig.CONFIG.instance().doStartColor);
+							yeah(age < (float) lifetime * YACLConfig.CONFIG.instance().fadeToTime && YACLConfig.CONFIG.instance().doStartColor);
 							break;
 						case MAIN:
-							yeah((!YACLConfig.CONFIG.instance().doStartColor || age > (float) maxAge * YACLConfig.CONFIG.instance().fadeToTime) && age < (float) maxAge * YACLConfig.CONFIG.instance().fadeOutTime);
+							yeah((!YACLConfig.CONFIG.instance().doStartColor || age > (float) lifetime * YACLConfig.CONFIG.instance().fadeToTime) && age < (float) lifetime * YACLConfig.CONFIG.instance().fadeOutTime);
 							break;
 						case UNTIL_END:
-							yeah(age < (float) maxAge * YACLConfig.CONFIG.instance().fadeOutTime);
+							yeah(age < (float) lifetime * YACLConfig.CONFIG.instance().fadeOutTime);
 							break;
 						case AFTER_START:
-							yeah(!YACLConfig.CONFIG.instance().doStartColor || age > (float) maxAge * YACLConfig.CONFIG.instance().fadeToTime);
+							yeah(!YACLConfig.CONFIG.instance().doStartColor || age > (float) lifetime * YACLConfig.CONFIG.instance().fadeToTime);
 							break;
 						//honestly, if you're using this mode and turn off start/end, you're the moron. Any weird behaviour here isn't my problem.
 						case EXCLUDING_MAIN:
-							yeah((age > (float) maxAge * YACLConfig.CONFIG.instance().fadeOutTime || age < (float) maxAge * YACLConfig.CONFIG.instance().fadeToTime));
+							yeah((age > (float) lifetime * YACLConfig.CONFIG.instance().fadeOutTime || age < (float) lifetime * YACLConfig.CONFIG.instance().fadeToTime));
 							break;
 						default:
 							setRainbowColor();
@@ -237,25 +240,25 @@ public abstract class TotemParticleMixin extends AnimatedParticle {
 				}
 				if (YACLConfig.CONFIG.instance().useAlpha) {
 					if (YACLConfig.CONFIG.instance().fadeOnGround && onGround) {
-						alpha = MathHelper.clamp(alpha + YACLConfig.CONFIG.instance().onGroundFade, 0, 1);
+						alpha = Mth.clamp(alpha + YACLConfig.CONFIG.instance().onGroundFade, 0, 1);
 					}
-					if (age > maxAge * YACLConfig.CONFIG.instance().alphaOutTime && YACLConfig.CONFIG.instance().loseAlpha) {
-						alpha = MathHelper.clamp(alpha + YACLConfig.CONFIG.instance().alphaOutSpeed, 0, 1);
+					if (age > lifetime * YACLConfig.CONFIG.instance().alphaOutTime && YACLConfig.CONFIG.instance().loseAlpha) {
+						alpha = Mth.clamp(alpha + YACLConfig.CONFIG.instance().alphaOutSpeed, 0, 1);
 					}
 				}
 			}
 			if (YACLConfig.CONFIG.instance().useMovement) {
 				if (YACLConfig.CONFIG.instance().useGravity) {
-					if (age > maxAge * YACLConfig.CONFIG.instance().changeGravityAtPercent && YACLConfig.CONFIG.instance().gravityOverTime) {
-						gravityStrength += YACLConfig.CONFIG.instance().gravityOverTimeAmount;
+					if (age > lifetime * YACLConfig.CONFIG.instance().changeGravityAtPercent && YACLConfig.CONFIG.instance().gravityOverTime) {
+						gravity += YACLConfig.CONFIG.instance().gravityOverTimeAmount;
 					}
 				}
 				if (YACLConfig.CONFIG.instance().useRotation) {
 					if (YACLConfig.CONFIG.instance().rotateOverTime) {
 						if (!onGround || YACLConfig.CONFIG.instance().rotateOnGround) {
-							zRotation += rotationSpeed;
+							roll += rotationSpeed;
 						}
-						if (age > maxAge * YACLConfig.CONFIG.instance().rotateAtPercent) {
+						if (age > lifetime * YACLConfig.CONFIG.instance().rotateAtPercent) {
 							if (YACLConfig.CONFIG.instance().smartROT) {
 								if (rotationSpeed != 0) {
 									if (YACLConfig.CONFIG.instance().rotateOverTimeAmount > 0) {
@@ -266,9 +269,9 @@ public abstract class TotemParticleMixin extends AnimatedParticle {
 										}
 									} else if (YACLConfig.CONFIG.instance().rotateOverTimeAmount < 0) {
 										if (rotationSpeed > 0) {
-											rotationSpeed = MathHelper.clamp(rotationSpeed + YACLConfig.CONFIG.instance().rotateOverTimeAmount, 0, 360);
+											rotationSpeed = Mth.clamp(rotationSpeed + YACLConfig.CONFIG.instance().rotateOverTimeAmount, 0, 360);
 										} else if (rotationSpeed < 0) {
-											rotationSpeed = MathHelper.clamp(rotationSpeed - YACLConfig.CONFIG.instance().rotateOverTimeAmount, -360, 0);
+											rotationSpeed = Mth.clamp(rotationSpeed - YACLConfig.CONFIG.instance().rotateOverTimeAmount, -360, 0);
 										}
 									}
 								}
@@ -281,11 +284,11 @@ public abstract class TotemParticleMixin extends AnimatedParticle {
 			}
 			if (YACLConfig.CONFIG.instance().useScale) {
 				if (YACLConfig.CONFIG.instance().scaleOnGround && onGround) {
-					scale = MathHelper.clamp(scale + YACLConfig.CONFIG.instance().onGroundScale, 0, 5);
+					quadSize = Mth.clamp(quadSize + YACLConfig.CONFIG.instance().onGroundScale, 0, 5);
 				}
 				if (YACLConfig.CONFIG.instance().scaleOverTime) {
-					if (age > maxAge * YACLConfig.CONFIG.instance().scaleAtPercent) {
-						scale = MathHelper.clamp(scale + YACLConfig.CONFIG.instance().scaleAmount, 0, 5);
+					if (age > lifetime * YACLConfig.CONFIG.instance().scaleAtPercent) {
+						quadSize = Mth.clamp(quadSize + YACLConfig.CONFIG.instance().scaleAmount, 0, 5);
 					}
 				}
 			}
@@ -298,7 +301,7 @@ public abstract class TotemParticleMixin extends AnimatedParticle {
 			setColor(getRainbowCol(0));
 			setSecondaryColor(getRainbowCol(YACLConfig.CONFIG.instance().rainbowGradientDelay));
 		} else {
-			Color.RGBtoHSB((int) (red * 255), (int) (green * 255), (int) (blue * 255), vals);
+			Color.RGBtoHSB((int) (rCol * 255), (int) (gCol * 255), (int) (bCol * 255), vals);
 			vals[0] += ((YACLConfig.CONFIG.instance().rainbowSpeed) / 100F);
 			setColor(Color.getHSBColor(vals[0], vals[1], vals[2]).getRGB());
 			setSecondaryColor(Color.getHSBColor(vals[0] + (YACLConfig.CONFIG.instance().rainbowGradientDelay / 10F), vals[1], vals[2]).getRGB());
@@ -315,43 +318,46 @@ public abstract class TotemParticleMixin extends AnimatedParticle {
 	@Unique
 	private void updateColor() {
 		//this is so bad. idc
-		if (age > (float) maxAge * YACLConfig.CONFIG.instance().fadeToTime && age < maxAge * 0.5F && YACLConfig.CONFIG.instance().doStartColor) {
-			red = MathHelper.lerp(YACLConfig.CONFIG.instance().fadeToSpeed, red, mainCol.getRed() / 255.0F);
-			green = MathHelper.lerp(YACLConfig.CONFIG.instance().fadeToSpeed, green, mainCol.getGreen() / 255.0F);
-			blue = MathHelper.lerp(YACLConfig.CONFIG.instance().fadeToSpeed, blue, mainCol.getBlue() / 255.0F);
-			red2 = MathHelper.lerp(YACLConfig.CONFIG.instance().fadeToSpeed, red2, col2.getRed() / 255.0F);
-			green2 = MathHelper.lerp(YACLConfig.CONFIG.instance().fadeToSpeed, green2, col2.getGreen() / 255.0F);
-			blue2 = MathHelper.lerp(YACLConfig.CONFIG.instance().fadeToSpeed, blue2, col2.getBlue() / 255.0F);
+		if (age > (float) lifetime * YACLConfig.CONFIG.instance().fadeToTime && age < lifetime * 0.5F && YACLConfig.CONFIG.instance().doStartColor) {
+			rCol = Mth.lerp(YACLConfig.CONFIG.instance().fadeToSpeed, rCol, mainCol.getRed() / 255.0F);
+			gCol = Mth.lerp(YACLConfig.CONFIG.instance().fadeToSpeed, gCol, mainCol.getGreen() / 255.0F);
+			bCol = Mth.lerp(YACLConfig.CONFIG.instance().fadeToSpeed, bCol, mainCol.getBlue() / 255.0F);
+			red2 = Mth.lerp(YACLConfig.CONFIG.instance().fadeToSpeed, red2, col2.getRed() / 255.0F);
+			green2 = Mth.lerp(YACLConfig.CONFIG.instance().fadeToSpeed, green2, col2.getGreen() / 255.0F);
+			blue2 = Mth.lerp(YACLConfig.CONFIG.instance().fadeToSpeed, blue2, col2.getBlue() / 255.0F);
 
-		} else if (age > (float) maxAge * YACLConfig.CONFIG.instance().fadeOutTime && YACLConfig.CONFIG.instance().doOutColor && age > maxAge * 0.5F) {
-			red = MathHelper.lerp(YACLConfig.CONFIG.instance().fadeOutSpeed, red, YACLConfig.CONFIG.instance().outTargetColor.getRed() / 255.0f);
-			green = MathHelper.lerp(YACLConfig.CONFIG.instance().fadeOutSpeed, green, YACLConfig.CONFIG.instance().outTargetColor.getGreen() / 255.0f);
-			blue = MathHelper.lerp(YACLConfig.CONFIG.instance().fadeOutSpeed, blue, YACLConfig.CONFIG.instance().outTargetColor.getBlue() / 255.0f);
-			red2 = MathHelper.lerp(YACLConfig.CONFIG.instance().fadeOutSpeed, red2, YACLConfig.CONFIG.instance().outTargetColor.getRed() / 255.0f);
-			green2 = MathHelper.lerp(YACLConfig.CONFIG.instance().fadeOutSpeed, green2, YACLConfig.CONFIG.instance().outTargetColor.getGreen() / 255.0f);
-			blue2 = MathHelper.lerp(YACLConfig.CONFIG.instance().fadeOutSpeed, blue2, YACLConfig.CONFIG.instance().outTargetColor.getBlue() / 255.0f);
+		} else if (age > (float) lifetime * YACLConfig.CONFIG.instance().fadeOutTime && YACLConfig.CONFIG.instance().doOutColor && age > lifetime * 0.5F) {
+			rCol = Mth.lerp(YACLConfig.CONFIG.instance().fadeOutSpeed, rCol, YACLConfig.CONFIG.instance().outTargetColor.getRed() / 255.0f);
+			gCol = Mth.lerp(YACLConfig.CONFIG.instance().fadeOutSpeed, gCol, YACLConfig.CONFIG.instance().outTargetColor.getGreen() / 255.0f);
+			bCol = Mth.lerp(YACLConfig.CONFIG.instance().fadeOutSpeed, bCol, YACLConfig.CONFIG.instance().outTargetColor.getBlue() / 255.0f);
+			red2 = Mth.lerp(YACLConfig.CONFIG.instance().fadeOutSpeed, red2, YACLConfig.CONFIG.instance().outTargetColor.getRed() / 255.0f);
+			green2 = Mth.lerp(YACLConfig.CONFIG.instance().fadeOutSpeed, green2, YACLConfig.CONFIG.instance().outTargetColor.getGreen() / 255.0f);
+			blue2 = Mth.lerp(YACLConfig.CONFIG.instance().fadeOutSpeed, blue2, YACLConfig.CONFIG.instance().outTargetColor.getBlue() / 255.0f);
 		}
 		else{
-			red2 = MathHelper.lerp(YACLConfig.CONFIG.instance().fadeToSpeed, red2, col2.getRed() / 255.0F);
-			green2 = MathHelper.lerp(YACLConfig.CONFIG.instance().fadeToSpeed, green2, col2.getGreen() / 255.0F);
-			blue2 = MathHelper.lerp(YACLConfig.CONFIG.instance().fadeToSpeed, blue2, col2.getBlue() / 255.0F);
+			red2 = Mth.lerp(YACLConfig.CONFIG.instance().fadeToSpeed, red2, col2.getRed() / 255.0F);
+			green2 = Mth.lerp(YACLConfig.CONFIG.instance().fadeToSpeed, green2, col2.getGreen() / 255.0F);
+			blue2 = Mth.lerp(YACLConfig.CONFIG.instance().fadeToSpeed, blue2, col2.getBlue() / 255.0F);
 		}
 	}
 
 
 	@Override
-	public int getBrightness(float tint) {
+	public int getLightCoords(float tint) {
 		if (YACLConfig.CONFIG.instance().modEnabled && YACLConfig.CONFIG.instance().lightLevel != -1) {
 			return YACLConfig.CONFIG.instance().lightLevel;
 		} else {
-			BlockPos blockPos = BlockPos.ofFloored(x, y, z);
-			return world.isChunkLoaded(blockPos) ? WorldRenderer.getLightmapCoordinates(world, blockPos) : 0;
+			BlockPos blockPos = BlockPos.containing(x, y, z);
+			return level.hasChunkAt(blockPos) ? LevelRenderer.getLightCoords(level, blockPos) : 0;
 		}
 	}
 
 	@Override
-	public float getSize(float tickDelta) {
-		return net.minecraft.util.math.MathHelper.lerp(tickDelta, prevScale, scale);
+	public float getQuadSize(float tickDelta) {
+		if (!YACLConfig.CONFIG.instance().modEnabled) {
+			return super.getQuadSize(tickDelta);
+		}
+		return net.minecraft.util.Mth.lerp(tickDelta, prevScale, quadSize);
 	}
 
 //	@Override
@@ -371,6 +377,6 @@ public abstract class TotemParticleMixin extends AnimatedParticle {
 	@Unique
 	private void yeah(VertexConsumer vertexConsumer, Quaternionf quaternionf, float f, float uhh, float h, float i, float j, float k, float l, float m, int n, float r, float g, float b, float a) {
 		Vector3f vector3f = (new Vector3f(i, j, 0.0F)).rotate(quaternionf).mul(k).add(f, uhh, h);
-		vertexConsumer.vertex(vector3f.x(), vector3f.y(), vector3f.z()).texture(l, m).color(r, g, b, a).light(n);
+		vertexConsumer.addVertex(vector3f.x(), vector3f.y(), vector3f.z()).setUv(l, m).setColor(r, g, b, a).setLight(n);
 	}
 }
